@@ -1,39 +1,40 @@
 import os
-import json
 import pickle
-from CoqGym.ASTactic.tac_grammar import CFG, TreeBuilder, NonterminalNode, TerminalNode
-import sys
-
-sys.setrecursionlimit(100000)
-sys.path.append(
-    os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../"))
-)
-from CoqGym.gallina import GallinaTermParser
-from lark.exceptions import UnexpectedCharacters, ParseError
-from CoqGym.utils import iter_proofs, SexpCache
 import argparse
 from hashlib import md5
-import pdb
 
+from CoqGym.ASTactic.tac_grammar import CFG, TreeBuilder, NonterminalNode, TerminalNode
+from CoqGym.gallina import GallinaTermParser
+from CoqGym.utils import iter_proofs, SexpCache
+from lark.exceptions import UnexpectedCharacters, ParseError
 
 term_parser = GallinaTermParser(caching=True)
 sexp_cache = SexpCache("./sexp_cache", readonly=True)
 
 
-def parse_goal(g):
+def parse_goal(goal):
+    """parse a goal
+
+    Args:
+        goal ([type]): the goal to be parsed
+
+    Returns:
+        [type]: the returned thing
+    """
+
     goal = {
-        "id": g["id"],
-        "text": g["type"],
-        "ast": term_parser.parse(sexp_cache[g["sexp"]]),
+        "id": goal["id"],
+        "text": goal["type"],
+        "ast": term_parser.parse(sexp_cache[goal["sexp"]]),
     }
     local_context = []
-    for i, h in enumerate(g["hypotheses"]):
-        for ident in h["idents"]:
+    for i, hypothesis in enumerate(goal["hypotheses"]):
+        for ident in hypothesis["idents"]:
             local_context.append(
                 {
                     "ident": ident,
-                    "text": h["type"],
-                    "ast": term_parser.parse(sexp_cache[h["sexp"]]),
+                    "text": hypothesis["type"],
+                    "ast": term_parser.parse(sexp_cache[hypothesis["sexp"]]),
                 }
             )
     return local_context, goal
@@ -42,7 +43,16 @@ def parse_goal(g):
 grammar = CFG("../CoqGymProject/CoqGym/ASTactic/tactics.ebnf", "tactic_expr")
 tree_builder = TreeBuilder(grammar)
 
+
 def tactic2actions(tac_str):
+    """my super function
+
+    Args:
+        tac_str (str): a tactic string
+
+    Returns:
+        [some json]: the return
+    """
     tree = tree_builder.transform(grammar.parser.parse(tac_str))
     assert tac_str.replace(" ", "") == tree.to_tokens().replace(" ", "")
     actions = []
@@ -57,17 +67,13 @@ def tactic2actions(tac_str):
     tree.traverse_pre(gather_actions)
     return actions
 
-proof_steps = []
 
-num_discarded = 0
+proof_steps = []
 
 
 def process_proof(filename, proof_data):
-    if "entry_cmds" in proof_data:
-        is_synthetic = True
-    else:
-        is_synthetic = False
-    global num_discarded
+
+    is_synthetic = "enty_cmds" in proof_data
 
     if args.filter and not md5(filename.encode()).hexdigest().startswith(args.filter):
         return
@@ -87,8 +93,7 @@ def process_proof(filename, proof_data):
 
         assert step["command"][1] == "VernacExtend"
         assert step["command"][0].endswith(".")
-        
-        
+
         # local context & goal
         if step["goal_ids"]["fg"] == []:
             num_discarded += 1
@@ -100,7 +105,7 @@ def process_proof(filename, proof_data):
         tac_str = step["command"][0][:-1]
         try:
             actions = tactic2actions(tac_str)
-        except (UnexpectedCharacters, ParseError) as ex:
+        except (UnexpectedCharacters, ParseError):
             num_discarded += 1
             continue
         proof_steps.append(
@@ -124,7 +129,9 @@ def process_proof(filename, proof_data):
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        description="Extract the proof steps from CoqGym for trainig ASTactic via supervised learning"
+        description="""
+            Extract the proof steps from CoqGym for trainig ASTactic via supervised learning
+        """
     )
     arg_parser.add_argument(
         "--data_root", type=str, default="./data", help="The folder for CoqGym"
@@ -149,10 +156,12 @@ if __name__ == "__main__":
                 pickle.dump(
                     step,
                     open(
-                        os.path.join(dirname, "%s-%08d.pickle" % (args.filter, i)), "wb"
+                        os.path.join(dirname, "%s-%08d.pickle" %
+                                     (args.filter, i)), "wb"
                     ),
                 )
             else:
-                pickle.dump(step, open(os.path.join(dirname, "%08d.pickle" % i), "wb"))
+                pickle.dump(step, open(os.path.join(
+                    dirname, "%08d.pickle" % i), "wb"))
 
-    print("\nOutput saved to ", args.output)
+    print(f"Output saved to {args.output}")
