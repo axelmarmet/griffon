@@ -6,6 +6,7 @@ from hashlib import md5
 from CoqGym.ASTactic.tac_grammar import CFG, TreeBuilder, NonterminalNode, TerminalNode
 from CoqGym.gallina import GallinaTermParser
 from CoqGym.utils import iter_proofs, SexpCache
+import lark
 from lark.exceptions import UnexpectedCharacters, ParseError
 
 term_parser = GallinaTermParser(caching=True)

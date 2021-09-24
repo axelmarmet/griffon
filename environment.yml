@@ -188,4 +188,3 @@ dependencies:
     - webencodings==0.5.1
     - widgetsnbextension==3.5.1
     - wrapt==1.12.1
-prefix: /home/axel/miniconda3/envs/coq_gym

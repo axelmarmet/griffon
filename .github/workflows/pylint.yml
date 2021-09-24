@@ -23,7 +23,7 @@ jobs:
     # # - name: What is happening
     # #   run: |
     # #     ls -R
-    
+
     - name: Install conda env
       run: |
         $CONDA/bin/conda env update --file environment.yml --name base
@@ -39,4 +39,5 @@ jobs:
 
     - name: Analysing the code with pylint
       run: |
+        pip list
         pylint --fail-under=8 `find . -name "*.py" -not -path "./CoqGym/*"`
