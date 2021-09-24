@@ -32,5 +32,4 @@ jobs:
         pip install pylint
     - name: Analysing the code with pylint
       run: |
-        pylint --fail-under=8 `find . -name "*.py" -not -path "./CoqGym/*"
-`
+        pylint --fail-under=8 `find . -name "*.py" -not -path "./CoqGym/*"`
