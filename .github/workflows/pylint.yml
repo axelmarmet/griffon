@@ -14,6 +14,7 @@ jobs:
       with:
         python-version: 3.9
     - name: What is happening
+      run: |
         ls -R
     - name: Install dependencies
       run: |
