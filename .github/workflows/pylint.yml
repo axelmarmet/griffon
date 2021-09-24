@@ -25,10 +25,10 @@ jobs:
     # #     ls -R
 
     - uses: conda-incubator/setup-miniconda@v2
-        with:
-          auto-update-conda: true
-          python-version: 3.7.1
-          environment-file: environment.yml
+      with:
+        auto-update-conda: true
+        python-version: 3.7.1
+        environment-file: environment.yml
 
     - name: create CoqGym package
       run: |
