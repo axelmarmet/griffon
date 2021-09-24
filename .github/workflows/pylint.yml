@@ -24,10 +24,12 @@ jobs:
     # #   run: |
     # #     ls -R
 
-    - name: Install conda env
-      run: |
-        $CONDA/bin/conda env update --file environment.yml --name base
-    
+    - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: 3.7.1
+          environment-file: environment.yml
+
     - name: create CoqGym package
       run: |
         pip install -e CoqGym
