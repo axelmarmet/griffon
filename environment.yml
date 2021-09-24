@@ -1,4 +1,4 @@
-name: griffon
+name: coq_gym
 channels:
   - pytorch
   - anaconda
@@ -101,9 +101,7 @@ dependencies:
   - sqlite=3.36.0=hc218d9a_0
   - tk=8.6.10=hbc83047_0
   - toml=0.10.2=pyhd3eb1b0_0
-  - torchaudio=0.9.0=py37
   - torchtext=0.10.0=py37
-  - torchvision=0.10.0=py37_cu102
   - tornado=6.1=py37h27cfd23_0
   - tqdm=4.62.0=pyhd3eb1b0_1
   - traitlets=5.0.5=pyhd3eb1b0_0
@@ -129,7 +127,6 @@ dependencies:
     - cloudpickle==1.6.0
     - cymem==2.0.5
     - cython==0.29.24
-    - de-core-news-sm==3.1.0
     - defusedxml==0.7.1
     - easyprocess==0.3
     - en-core-web-sm==3.1.0
@@ -194,4 +191,4 @@ dependencies:
     - webencodings==0.5.1
     - widgetsnbextension==3.5.1
     - wrapt==1.12.1
-
+prefix: /home/axel/miniconda3/envs/coq_gym
