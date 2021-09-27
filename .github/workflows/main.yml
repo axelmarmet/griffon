@@ -32,5 +32,4 @@ jobs:
     - name: Analysing the code with pylint
       shell: bash -l {0}
       run: |
-        pip list
         pylint --fail-under=8 `find . -name "*.py" -not -path "./CoqGym/*"`

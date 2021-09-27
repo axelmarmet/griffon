@@ -3,11 +3,11 @@ import pickle
 import argparse
 from hashlib import md5
 
+from lark.exceptions import UnexpectedCharacters, ParseError
+
 from CoqGym.ASTactic.tac_grammar import CFG, TreeBuilder, NonterminalNode, TerminalNode
 from CoqGym.gallina import GallinaTermParser
 from CoqGym.utils import iter_proofs, SexpCache
-import lark
-from lark.exceptions import UnexpectedCharacters, ParseError
 
 term_parser = GallinaTermParser(caching=True)
 sexp_cache = SexpCache("./sexp_cache", readonly=True)
@@ -97,7 +97,6 @@ def process_proof(filename, proof_data):
 
         # local context & goal
         if step["goal_ids"]["fg"] == []:
-            num_discarded += 1
             continue
 
         goal_id = step["goal_ids"]["fg"][0]
@@ -107,7 +106,6 @@ def process_proof(filename, proof_data):
         try:
             actions = tactic2actions(tac_str)
         except (UnexpectedCharacters, ParseError):
-            num_discarded += 1
             continue
         proof_steps.append(
             {
@@ -149,7 +147,7 @@ if __name__ == "__main__":
     )
 
     for split in ["train", "valid"]:
-        for i, step in enumerate(proof_steps[split]):
+        for i, step in enumerate(proof_steps):
             dirname = os.path.join(args.output, split)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
