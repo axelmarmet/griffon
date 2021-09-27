@@ -30,13 +30,13 @@ jobs:
         environment-file: environment.yml
 
     - name: Conda info
-        shell: bash -l {0}
-        run: conda info
+      shell: bash -l {0}
+      run: conda info
 
     - name: Conda list
-        shell: pwsh
-        run: conda list
-        
+      shell: pwsh
+      run: conda list
+
     - name: create CoqGym package
       run: |
         pip install -e CoqGym
