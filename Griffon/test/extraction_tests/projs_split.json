@@ -1,0 +1,12 @@
+{
+    "projs_train": [
+        "train_proj",
+        "ev"
+    ],
+    "projs_test": [
+        "test_proj"
+    ],
+    "projs_valid": [
+        "valid_proj"
+    ]
+}

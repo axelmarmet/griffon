@@ -1,0 +1,257 @@
+'type':'@eq nat (let x := S (S O) in Nat.add x x) (S (S (S (S O))))'
+
+goal Logic Init Coq eq 0
+    Datatypes Init Coq nat 0
+    let
+        x
+        Datatypes Init Coq nat 0 2
+        Datatypes Init Coq nat 0 2
+        Datatypes Init Coq nat 0 1
+
+        Datatypes Init Coq nat 0
+
+        Nat Init Coq add x x
+
+        Datatypes Init Coq nat 0 2
+        Datatypes Init Coq nat 0 2
+        Datatypes Init Coq nat 0 2
+        Datatypes Init Coq nat 0 2
+        Datatypes Init Coq nat 0 1'
+
+Tree(constructor_app,
+[
+    Tree(constructor_ind,
+    [
+        Tree(names__inductive,
+        [
+            Tree(constructor_mutind,
+            [
+                Tree(constructor_mpfile,
+                [
+                    Tree(constructor_dirpath,
+                    [
+                        Token(__ANON_1, 'Logic'),
+                        Token(__ANON_1, 'Init'),
+                        Token(__ANON_1, 'Coq')
+                    ])
+                ]),
+                Tree(constructor_dirpath, []),
+                Tree(names__label__t,
+                [
+                    Token(__ANON_1, 'eq')
+                ])
+            ]),
+            Tree(int, [Token(SIGNED_INT, '0')])
+        ]),
+        Tree(constructor_instance, [])
+    ]),
+    Tree(constructor_ind,
+    [
+        Tree(names__inductive,
+        [
+            Tree(constructor_mutind,
+            [
+                Tree(constructor_mpfile,
+                [
+                    Tree(constructor_dirpath,
+                    [
+                        Token(__ANON_1, 'Datatypes'),
+                        Token(__ANON_1, 'Init'),
+                        Token(__ANON_1, 'Coq')
+                    ])
+                ]),
+                Tree(constructor_dirpath, []),
+                Tree(names__label__t,
+                [
+                    Token(__ANON_1, 'nat')
+                ])
+            ]),
+            Tree(int, [Token(SIGNED_INT, '0')])
+        ]),
+        Tree(constructor_instance, [])
+    ]),
+    Tree(constructor_letin,
+    [
+        Tree(constructor_name,
+        [
+            Token(__ANON_1, 'x')
+        ]),
+        Tree(constructor_app,
+        [
+            Tree(constructor_construct,
+            [
+                Tree(names__constructor,
+                [
+                    Tree(names__inductive,
+                    [
+                        Tree(constructor_mutind,
+                        [
+                            Tree(constructor_mpfile,
+                            [
+                                Tree(constructor_dirpath,
+                                [
+                                    Token(__ANON_1, 'Datatypes'),
+                                    Token(__ANON_1, 'Init'),
+                                    Token(__ANON_1, 'Coq')
+                                ])
+                            ]),
+                            Tree(constructor_dirpath, []),
+                            Tree(names__label__t,
+                            [
+                                Token(__ANON_1, 'nat')
+                            ])
+                        ]),
+                        Tree(int,
+                        [
+                            Token(SIGNED_INT, '0')
+                        ])
+                    ]),
+                    Tree(int,
+                    [
+                        Token(SIGNED_INT, '2')
+                    ])
+                ]),
+                Tree(constructor_instance, [])
+            ]),
+            Tree(constructor_app,
+            [
+                Tree(constructor_construct,
+                [
+                    Tree(names__constructor,
+                    [
+                        Tree(names__inductive,
+                        [
+                            Tree(constructor_mutind,
+                            [
+                                Tree(constructor_mpfile,
+                                [
+                                    Tree(constructor_dirpath,
+                                    [
+                                        Token(__ANON_1, 'Datatypes'),
+                                        Token(__ANON_1, 'Init'),
+                                        Token(__ANON_1, 'Coq')
+                                    ])
+                                ]),
+                                Tree(constructor_dirpath, []),
+                                Tree(names__label__t,
+                                [
+                                    Token(__ANON_1, 'nat')
+                                ])
+                            ]),
+                            Tree(int,
+                            [
+                                Token(SIGNED_INT, '0')
+                            ])
+                        ]),
+                        Tree(int,
+                        [
+                            Token(SIGNED_INT, '2')
+                        ])
+                    ]),
+                    Tree(constructor_instance, [])
+                ]),
+                Tree(constructor_construct,
+                [
+                    Tree(names__constructor,
+                    [
+                        Tree(names__inductive,
+                        [
+                            Tree(constructor_mutind,
+                            [
+                                Tree(constructor_mpfile,
+                                [
+                                    Tree(constructor_dirpath,
+                                    [
+                                        Token(__ANON_1, 'Datatypes'),
+                                        Token(__ANON_1, 'Init'),
+                                        Token(__ANON_1, 'Coq')
+                                    ])
+                                ]),
+                                Tree(constructor_dirpath, []),
+                                Tree(names__label__t,
+                                [
+                                    Token(__ANON_1, 'nat')
+                                ])
+                            ]),
+                            Tree(int,
+                            [
+                                Token(SIGNED_INT, '0')
+                            ])
+                        ]),
+                        Tree(int,
+                        [
+                            Token(SIGNED_INT, '1')
+                        ])
+                    ]),
+                    Tree(constructor_instance, [])
+                ])
+            ])
+        ]),
+        Tree(constructor_ind,
+        [
+            Tree(names__inductive,
+            [
+                Tree(constructor_mutind,
+                [
+                    Tree(constructor_mpfile,
+                    [
+                        Tree(constructor_dirpath,
+                        [
+                            Token(__ANON_1, 'Datatypes'),
+                            Token(__ANON_1, 'Init'),
+                            Token(__ANON_1, 'Coq')
+                        ])
+                    ]),
+                    Tree(constructor_dirpath, []),
+                    Tree(names__label__t,
+                    [
+                        Token(__ANON_1, 'nat')
+                    ])
+                ]),
+                Tree(int,
+                [
+                    Token(SIGNED_INT, '0')
+                ])
+            ]),
+            Tree(constructor_instance, [])
+        ]),
+        Tree(constructor_app,
+        [
+            Tree(constructor_const,
+            [
+                Tree(constructor_constant,
+                [
+                    Tree(constructor_mpfile,
+                    [
+                        Tree(constructor_dirpath,
+                        [
+                            Token(__ANON_1, 'Nat'),
+                            Token(__ANON_1, 'Init'),
+                            Token(__ANON_1, 'Coq')
+                        ])
+                    ]),
+                    Tree(constructor_dirpath, []),
+                    Tree(names__label__t,
+                    [
+                        Token(__ANON_1, 'add')
+                    ])
+                ]),
+                Tree(constructor_instance, [])
+            ]),
+            Tree(constructor_rel,
+            [
+                Tree(int,
+                [
+                    Token(SIGNED_INT, '1')]
+                )
+            ]),
+            Tree(constructor_rel,
+            [
+                Tree(int,
+                [
+                    Token(SIGNED_INT, '1')
+                ])
+            ])
+        ])
+    ]),
+    Tree(constructor_app, [Tree(constructor_construct, [Tree(names__constructor, [Tree(names__inductive, [Tree(constructor_mutind, [Tree(constructor_mpfile, [Tree(constructor_dirpath, [Token(__ANON_1, 'Datatypes'), Token(__ANON_1, 'Init'), Token(__ANON_1, 'Coq')])]), Tree(constructor_dirpath, []), Tree(names__label__t, [Token(__ANON_1, 'nat')])]), Tree(int, [Token(SIGNED_INT, '0')])]), Tree(int, [Token(SIGNED_INT, '2')])]), Tree(constructor_instance, [])]), Tree(constructor_app, [Tree(constructor_construct, [Tree(names__constructor, [Tree(names__inductive, [Tree(constructor_mutind, [Tree(constructor_mpfile, [Tree(constructor_dirpath, [Token(__ANON_1, 'Datatypes'), Token(__ANON_1, 'Init'), Token(__ANON_1, 'Coq')])]), Tree(constructor_dirpath, []), Tree(names__label__t, [Token(__ANON_1, 'nat')])]), Tree(int, [Token(SIGNED_INT, '0')])]), Tree(int, [Token(SIGNED_INT, '2')])]), Tree(constructor_instance, [])]), Tree(constructor_app, [Tree(constructor_construct, [Tree(names__constructor, [Tree(names__inductive, [Tree(constructor_mutind, [Tree(constructor_mpfile, [Tree(constructor_dirpath, [Token(__ANON_1, 'Datatypes'), Token(__ANON_1, 'Init'), Token(__ANON_1, 'Coq')])]), Tree(constructor_dirpath, []), Tree(names__label__t, [Token(__ANON_1, 'nat')])]), Tree(int, [Token(SIGNED_INT, '0')])]), Tree(int, [Token(SIGNED_INT, '2')])]), Tree(constructor_instance, [])]), Tree(constructor_app, [Tree(constructor_construct, [Tree(names__constructor, [Tree(names__inductive, [Tree(constructor_mutind, [Tree(constructor_mpfile, [Tree(constructor_dirpath, [Token(__ANON_1, 'Datatypes'), Token(__ANON_1, 'Init'), Token(__ANON_1, 'Coq')])]), Tree(constructor_dirpath, []), Tree(names__label__t, [Token(__ANON_1, 'nat')])]), Tree(int, [Token(SIGNED_INT, '0')])]), Tree(int, [Token(SIGNED_INT, '2')])]), Tree(constructor_instance, [])]), Tree(constructor_construct, [Tree(names__constructor, [Tree(names__inductive, [Tree(constructor_mutind, [Tree(constructor_mpfile, [Tree(constructor_dirpath, [Token(__ANON_1, 'Datatypes'), Token(__ANON_1, 'Init'), Token(__ANON_1, 'Coq')])]), Tree(constructor_dirpath, []), Tree(names__label__t, [Token(__ANON_1, 'nat')])]), Tree(int, [Token(SIGNED_INT, '0')])]), Tree(int, [Token(SIGNED_INT, '1')])]), Tree(constructor_instance, [])])])])])])])

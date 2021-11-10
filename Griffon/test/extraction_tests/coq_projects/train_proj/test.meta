@@ -1,0 +1,425 @@
+(**PWD** /home/axel/Documents/master_proj/Griffon/Griffon/test/extraction_tests/coq_projects/train_proj **)
+(**LOAD_PATH** Logical Path / Physical path / Implicit:
+Top
+  /home/axel/Documents/master_proj/Griffon/Griffon/test/extraction_tests/coq_projects/train_proj
+  true
+<> /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib false
+LinAlg.LinAlg
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/LinAlg/LinAlg
+  false
+LinAlg.examples
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/LinAlg/examples
+  false
+LinAlg.support
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/LinAlg/support
+  false
+LinAlg.extras
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/LinAlg/extras
+  false
+LinAlg /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/LinAlg
+  false
+Pocklington
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/Pocklington
+  false
+StructTact
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/StructTact
+  false
+mathcomp.bigenough
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/bigenough
+  false
+mathcomp.algebra
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/algebra
+  false
+mathcomp.fingroup
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/fingroup
+  false
+mathcomp.solvable
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/solvable
+  false
+mathcomp.ssreflect
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/ssreflect
+  false
+mathcomp.field
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/field
+  false
+mathcomp.character
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/character
+  false
+mathcomp.finmap
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/finmap
+  false
+mathcomp.all
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/all
+  false
+mathcomp
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp
+  false
+Cheerios
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/Cheerios
+  false
+Coquelicot
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/Coquelicot
+  false
+ZornsLemma
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ZornsLemma
+  false
+ExtLib.Structures
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Structures
+  false
+ExtLib.Programming
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Programming
+  false
+ExtLib.Tactics
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Tactics
+  false
+ExtLib.Generic
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Generic
+  false
+ExtLib.Core
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Core
+  false
+ExtLib.Relations
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Relations
+  false
+ExtLib.Recur
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Recur
+  false
+ExtLib.Data.Map
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Data/Map
+  false
+ExtLib.Data.Graph
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Data/Graph
+  false
+ExtLib.Data.Monads
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Data/Monads
+  false
+ExtLib.Data.Eq
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Data/Eq
+  false
+ExtLib.Data.Set
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Data/Set
+  false
+ExtLib.Data
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Data
+  false
+ExtLib /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib
+  false
+Iterable
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/Iterable
+  false
+Metalib
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/Metalib
+  false
+BellantoniCook
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/BellantoniCook
+  false
+SimpleIO
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/SimpleIO
+  false
+InfSeqExt
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/InfSeqExt
+  false
+fcsl.pcm
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/fcsl/pcm
+  false
+fcsl.finmap
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/fcsl/finmap
+  false
+fcsl /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/fcsl
+  false
+CUnit /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/CUnit
+  false
+Algebra
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/Algebra
+  false
+ErrorHandlers
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ErrorHandlers
+  false
+ListString
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ListString
+  false
+FunctionNinjas
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/FunctionNinjas
+  false
+Verdi /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/Verdi
+  false
+IntMap /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/IntMap
+  false
+ListPlus
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ListPlus
+  false
+Hammer /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/Hammer
+  false
+Coq /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins true
+Coq.btauto /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/btauto
+  true
+Coq.funind /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/funind
+  true
+Coq.rtauto /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/rtauto
+  true
+Coq.ssr /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/ssr true
+Coq.ssrmatching
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/ssrmatching true
+Coq.omega /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/omega
+  true
+Coq.quote /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/quote
+  true
+Coq.ltac /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/ltac true
+Coq.firstorder
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/firstorder true
+Coq.micromega
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/micromega true
+Coq.extraction
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/extraction true
+Coq.derive /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/derive
+  true
+Coq.xml /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/xml true
+Coq.cc /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/cc true
+Coq.romega /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/romega
+  true
+Coq.setoid_ring
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/setoid_ring true
+Coq.syntax /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/syntax
+  true
+Coq.nsatz /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/nsatz
+  true
+Coq /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories true
+Coq.Numbers.Natural.Binary
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Numbers/Natural/Binary
+  true
+Coq.Numbers.Natural.Abstract
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Numbers/Natural/Abstract
+  true
+Coq.Numbers.Natural.Peano
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Numbers/Natural/Peano
+  true
+Coq.Numbers.Natural
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Numbers/Natural
+  true
+Coq.Numbers.Cyclic.ZModulo
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Numbers/Cyclic/ZModulo
+  true
+Coq.Numbers.Cyclic.Abstract
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Numbers/Cyclic/Abstract
+  true
+Coq.Numbers.Cyclic.Int31
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Numbers/Cyclic/Int31
+  true
+Coq.Numbers.Cyclic
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Numbers/Cyclic
+  true
+Coq.Numbers.Integer.Binary
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Numbers/Integer/Binary
+  true
+Coq.Numbers.Integer.Abstract
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Numbers/Integer/Abstract
+  true
+Coq.Numbers.Integer.NatPairs
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Numbers/Integer/NatPairs
+  true
+Coq.Numbers.Integer
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Numbers/Integer
+  true
+Coq.Numbers.NatInt
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Numbers/NatInt
+  true
+Coq.Numbers
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Numbers true
+Coq.NArith /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/NArith
+  true
+Coq.Logic /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Logic
+  true
+Coq.PArith /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/PArith
+  true
+Coq.Unicode
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Unicode true
+Coq.Arith /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Arith
+  true
+Coq.Sorting
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Sorting true
+Coq.Structures
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Structures true
+Coq.Classes
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Classes true
+Coq.Program
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Program true
+Coq.MSets /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/MSets
+  true
+Coq.Strings
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Strings true
+Coq.Setoids
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Setoids true
+Coq.Vectors
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Vectors true
+Coq.Reals /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Reals
+  true
+Coq.Init /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Init
+  true
+Coq.Sets /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Sets
+  true
+Coq.Lists /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Lists
+  true
+Coq.Wellfounded
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Wellfounded
+  true
+Coq.FSets /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/FSets
+  true
+Coq.Compat /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Compat
+  true
+Coq.Relations
+  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Relations true
+Coq.Bool /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/Bool
+  true
+Coq.QArith /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/QArith
+  true
+Coq.ZArith /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/theories/ZArith
+  true **)
+(**ML_PATH**  "ML Load Path:\n  /home/axel/Documents/master_proj/Griffon/Griffon/test/extraction_tests/coq_projects/train_proj\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/LinAlg/LinAlg\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/LinAlg/examples\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/LinAlg/support\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/LinAlg/extras\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/LinAlg\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/Pocklington\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/StructTact\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/bigenough\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/algebra\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/fingroup\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/solvable\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/ssreflect\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/field\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/character\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/finmap\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp/all\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/mathcomp\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/Cheerios\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/Coquelicot\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ZornsLemma\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Structures\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Programming\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Tactics\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Generic\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Core\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Relations\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Recur\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Data/Map\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Data/Graph\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Data/Monads\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Data/Eq\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Data/Set\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib/Data\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ExtLib\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/Iterable\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/Metalib\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/BellantoniCook\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/SimpleIO\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/InfSeqExt\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/fcsl/pcm\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/fcsl/finmap\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/fcsl\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/CUnit\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/Algebra\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ErrorHandlers\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ListString\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/FunctionNinjas\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/Verdi\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/IntMap\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/ListPlus\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/user-contrib/Hammer\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/btauto\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/funind\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/rtauto\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/ssr\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/ssrmatching\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/omega\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/quote\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/ltac\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/firstorder\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/micromega\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/extraction\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/derive\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/xml\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/cc\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/romega\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/setoid_ring\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/syntax\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/plugins/nsatz\n  /home/axel/Documents/master_proj/CoqGym/CoqGym/coq/dev" **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 1; Loc.bol_pos = 0; Loc.line_nb_last = 1; Loc.bol_pos_last = 0; Loc.bp = 0; Loc.ep = 20} **)
+(**VERNAC_TYPE** VernacRequire **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 2; Loc.bol_pos = 21; Loc.line_nb_last = 2; Loc.bol_pos_last = 21; Loc.bp = 21; Loc.ep = 42} **)
+(**VERNAC_TYPE** VernacImport **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 4; Loc.bol_pos = 44; Loc.line_nb_last = 4; Loc.bol_pos_last = 44; Loc.bp = 44; Loc.ep = 102} **)
+(**VERNAC_TYPE** VernacInductive **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 6; Loc.bol_pos = 104; Loc.line_nb_last = 6; Loc.bol_pos_last = 104; Loc.bp = 104; Loc.ep = 159} **)
+(**VERNAC_TYPE** VernacCoFixpoint **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 8; Loc.bol_pos = 161; Loc.line_nb_last = 15; Loc.bol_pos_last = 325; Loc.bp = 161; Loc.ep = 331} **)
+(**VERNAC_TYPE** VernacFixpoint **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 17; Loc.bol_pos = 333; Loc.line_nb_last = 21; Loc.bol_pos_last = 495; Loc.bp = 333; Loc.ep = 503} **)
+(**VERNAC_TYPE** VernacFixpoint **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 23; Loc.bol_pos = 505; Loc.line_nb_last = 24; Loc.bol_pos_last = 522; Loc.bp = 505; Loc.ep = 572} **)
+(**VERNAC_TYPE** VernacStartTheoremProof **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 25; Loc.bol_pos = 573; Loc.line_nb_last = 25; Loc.bol_pos_last = 573; Loc.bp = 573; Loc.ep = 579} **)
+(**VERNAC_TYPE** VernacProof **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 26; Loc.bol_pos = 580; Loc.line_nb_last = 26; Loc.bol_pos_last = 580; Loc.bp = 582; Loc.ep = 594} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 27; Loc.bol_pos = 595; Loc.line_nb_last = 27; Loc.bol_pos_last = 595; Loc.bp = 595; Loc.ep = 599} **)
+(**VERNAC_TYPE** VernacEndProof **)
+(**PROOF_NAME** stupid **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 29; Loc.bol_pos = 601; Loc.line_nb_last = 30; Loc.bol_pos_last = 622; Loc.bp = 601; Loc.ep = 670} **)
+(**VERNAC_TYPE** VernacStartTheoremProof **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 31; Loc.bol_pos = 671; Loc.line_nb_last = 31; Loc.bol_pos_last = 671; Loc.bp = 671; Loc.ep = 677} **)
+(**VERNAC_TYPE** VernacProof **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 32; Loc.bol_pos = 678; Loc.line_nb_last = 32; Loc.bol_pos_last = 678; Loc.bp = 680; Loc.ep = 687} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 33; Loc.bol_pos = 688; Loc.line_nb_last = 33; Loc.bol_pos_last = 688; Loc.bp = 690; Loc.ep = 702} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 34; Loc.bol_pos = 703; Loc.line_nb_last = 34; Loc.bol_pos_last = 703; Loc.bp = 705; Loc.ep = 720} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 34; Loc.bol_pos = 703; Loc.line_nb_last = 34; Loc.bol_pos_last = 703; Loc.bp = 721; Loc.ep = 727} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 35; Loc.bol_pos = 728; Loc.line_nb_last = 35; Loc.bol_pos_last = 728; Loc.bp = 730; Loc.ep = 753} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 36; Loc.bol_pos = 754; Loc.line_nb_last = 36; Loc.bol_pos_last = 754; Loc.bp = 756; Loc.ep = 776} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 37; Loc.bol_pos = 777; Loc.line_nb_last = 37; Loc.bol_pos_last = 777; Loc.bp = 779; Loc.ep = 780} **)
+(**VERNAC_TYPE** VernacBullet **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 37; Loc.bol_pos = 777; Loc.line_nb_last = 37; Loc.bol_pos_last = 777; Loc.bp = 781; Loc.ep = 787} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 37; Loc.bol_pos = 777; Loc.line_nb_last = 37; Loc.bol_pos_last = 777; Loc.bp = 788; Loc.ep = 800} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 38; Loc.bol_pos = 801; Loc.line_nb_last = 38; Loc.bol_pos_last = 801; Loc.bp = 803; Loc.ep = 804} **)
+(**VERNAC_TYPE** VernacBullet **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 38; Loc.bol_pos = 801; Loc.line_nb_last = 38; Loc.bol_pos_last = 801; Loc.bp = 805; Loc.ep = 811} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 38; Loc.bol_pos = 801; Loc.line_nb_last = 38; Loc.bol_pos_last = 801; Loc.bp = 812; Loc.ep = 827} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 38; Loc.bol_pos = 801; Loc.line_nb_last = 38; Loc.bol_pos_last = 801; Loc.bp = 828; Loc.ep = 840} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 39; Loc.bol_pos = 841; Loc.line_nb_last = 39; Loc.bol_pos_last = 841; Loc.bp = 841; Loc.ep = 845} **)
+(**VERNAC_TYPE** VernacEndProof **)
+(**PROOF_NAME** test_cofix **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 41; Loc.bol_pos = 847; Loc.line_nb_last = 45; Loc.bol_pos_last = 948; Loc.bp = 847; Loc.ep = 952} **)
+(**VERNAC_TYPE** VernacDefinition **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 48; Loc.bol_pos = 955; Loc.line_nb_last = 48; Loc.bol_pos_last = 955; Loc.bp = 955; Loc.ep = 976} **)
+(**VERNAC_TYPE** VernacAssumption **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 50; Loc.bol_pos = 978; Loc.line_nb_last = 54; Loc.bol_pos_last = 1072; Loc.bp = 978; Loc.ep = 1106} **)
+(**VERNAC_TYPE** VernacInductive **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 56; Loc.bol_pos = 1108; Loc.line_nb_last = 64; Loc.bol_pos_last = 1304; Loc.bp = 1108; Loc.ep = 1308} **)
+(**VERNAC_TYPE** VernacFixpoint **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 66; Loc.bol_pos = 1310; Loc.line_nb_last = 67; Loc.bol_pos_last = 1334; Loc.bp = 1310; Loc.ep = 1371} **)
+(**VERNAC_TYPE** VernacStartTheoremProof **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 68; Loc.bol_pos = 1372; Loc.line_nb_last = 68; Loc.bol_pos_last = 1372; Loc.bp = 1372; Loc.ep = 1378} **)
+(**VERNAC_TYPE** VernacProof **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 69; Loc.bol_pos = 1379; Loc.line_nb_last = 69; Loc.bol_pos_last = 1379; Loc.bp = 1381; Loc.ep = 1388} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 70; Loc.bol_pos = 1389; Loc.line_nb_last = 70; Loc.bol_pos_last = 1389; Loc.bp = 1391; Loc.ep = 1408} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 71; Loc.bol_pos = 1409; Loc.line_nb_last = 71; Loc.bol_pos_last = 1409; Loc.bp = 1411; Loc.ep = 1424} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 72; Loc.bol_pos = 1425; Loc.line_nb_last = 72; Loc.bol_pos_last = 1425; Loc.bp = 1425; Loc.ep = 1429} **)
+(**VERNAC_TYPE** VernacEndProof **)
+(**PROOF_NAME** multi_fix_thm **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 75; Loc.bol_pos = 1432; Loc.line_nb_last = 76; Loc.bol_pos_last = 1456; Loc.bp = 1432; Loc.ep = 1525} **)
+(**VERNAC_TYPE** VernacStartTheoremProof **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 77; Loc.bol_pos = 1526; Loc.line_nb_last = 77; Loc.bol_pos_last = 1526; Loc.bp = 1526; Loc.ep = 1532} **)
+(**VERNAC_TYPE** VernacProof **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 78; Loc.bol_pos = 1533; Loc.line_nb_last = 78; Loc.bol_pos_last = 1533; Loc.bp = 1535; Loc.ep = 1542} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 79; Loc.bol_pos = 1543; Loc.line_nb_last = 79; Loc.bol_pos_last = 1543; Loc.bp = 1545; Loc.ep = 1561} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 80; Loc.bol_pos = 1562; Loc.line_nb_last = 80; Loc.bol_pos_last = 1562; Loc.bp = 1564; Loc.ep = 1588} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 81; Loc.bol_pos = 1589; Loc.line_nb_last = 81; Loc.bol_pos_last = 1589; Loc.bp = 1589; Loc.ep = 1593} **)
+(**VERNAC_TYPE** VernacEndProof **)
+(**PROOF_NAME** vacuous_match **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 84; Loc.bol_pos = 1596; Loc.line_nb_last = 85; Loc.bol_pos_last = 1614; Loc.bp = 1596; Loc.ep = 1642} **)
+(**VERNAC_TYPE** VernacStartTheoremProof **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 86; Loc.bol_pos = 1643; Loc.line_nb_last = 86; Loc.bol_pos_last = 1643; Loc.bp = 1643; Loc.ep = 1649} **)
+(**VERNAC_TYPE** VernacProof **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 87; Loc.bol_pos = 1650; Loc.line_nb_last = 87; Loc.bol_pos_last = 1650; Loc.bp = 1652; Loc.ep = 1664} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 88; Loc.bol_pos = 1665; Loc.line_nb_last = 88; Loc.bol_pos_last = 1665; Loc.bp = 1665; Loc.ep = 1669} **)
+(**VERNAC_TYPE** VernacEndProof **)
+(**PROOF_NAME** obvious **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 90; Loc.bol_pos = 1671; Loc.line_nb_last = 91; Loc.bol_pos_last = 1695; Loc.bp = 1671; Loc.ep = 1723} **)
+(**VERNAC_TYPE** VernacStartTheoremProof **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 92; Loc.bol_pos = 1724; Loc.line_nb_last = 92; Loc.bol_pos_last = 1724; Loc.bp = 1724; Loc.ep = 1730} **)
+(**VERNAC_TYPE** VernacProof **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 93; Loc.bol_pos = 1731; Loc.line_nb_last = 93; Loc.bol_pos_last = 1731; Loc.bp = 1733; Loc.ep = 1747} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 94; Loc.bol_pos = 1748; Loc.line_nb_last = 94; Loc.bol_pos_last = 1748; Loc.bp = 1748; Loc.ep = 1752} **)
+(**VERNAC_TYPE** VernacEndProof **)
+(**PROOF_NAME** other_obvious **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 96; Loc.bol_pos = 1754; Loc.line_nb_last = 97; Loc.bol_pos_last = 1773; Loc.bp = 1754; Loc.ep = 1823} **)
+(**VERNAC_TYPE** VernacStartTheoremProof **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 98; Loc.bol_pos = 1824; Loc.line_nb_last = 98; Loc.bol_pos_last = 1824; Loc.bp = 1824; Loc.ep = 1830} **)
+(**VERNAC_TYPE** VernacProof **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 99; Loc.bol_pos = 1831; Loc.line_nb_last = 99; Loc.bol_pos_last = 1831; Loc.bp = 1833; Loc.ep = 1840} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 100; Loc.bol_pos = 1841; Loc.line_nb_last = 100; Loc.bol_pos_last = 1841; Loc.bp = 1843; Loc.ep = 1857} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 101; Loc.bol_pos = 1858; Loc.line_nb_last = 101; Loc.bol_pos_last = 1858; Loc.bp = 1860; Loc.ep = 1886} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 102; Loc.bol_pos = 1887; Loc.line_nb_last = 102; Loc.bol_pos_last = 1887; Loc.bp = 1887; Loc.ep = 1891} **)
+(**VERNAC_TYPE** VernacEndProof **)
+(**PROOF_NAME** fix_test **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 104; Loc.bol_pos = 1893; Loc.line_nb_last = 106; Loc.bol_pos_last = 1935; Loc.bp = 1893; Loc.ep = 1968} **)
+(**VERNAC_TYPE** VernacStartTheoremProof **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 107; Loc.bol_pos = 1969; Loc.line_nb_last = 107; Loc.bol_pos_last = 1969; Loc.bp = 1969; Loc.ep = 1975} **)
+(**VERNAC_TYPE** VernacProof **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 108; Loc.bol_pos = 1976; Loc.line_nb_last = 108; Loc.bol_pos_last = 1976; Loc.bp = 1980; Loc.ep = 1996} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 109; Loc.bol_pos = 1997; Loc.line_nb_last = 109; Loc.bol_pos_last = 1997; Loc.bp = 2001; Loc.ep = 2008} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 110; Loc.bol_pos = 2009; Loc.line_nb_last = 110; Loc.bol_pos_last = 2009; Loc.bp = 2013; Loc.ep = 2035} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 111; Loc.bol_pos = 2036; Loc.line_nb_last = 111; Loc.bol_pos_last = 2036; Loc.bp = 2040; Loc.ep = 2041} **)
+(**VERNAC_TYPE** VernacBullet **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 111; Loc.bol_pos = 2036; Loc.line_nb_last = 111; Loc.bol_pos_last = 2036; Loc.bp = 2042; Loc.ep = 2054} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 112; Loc.bol_pos = 2055; Loc.line_nb_last = 112; Loc.bol_pos_last = 2055; Loc.bp = 2061; Loc.ep = 2069} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 112; Loc.bol_pos = 2055; Loc.line_nb_last = 112; Loc.bol_pos_last = 2055; Loc.bp = 2070; Loc.ep = 2079} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 113; Loc.bol_pos = 2080; Loc.line_nb_last = 113; Loc.bol_pos_last = 2080; Loc.bp = 2084; Loc.ep = 2085} **)
+(**VERNAC_TYPE** VernacBullet **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 113; Loc.bol_pos = 2080; Loc.line_nb_last = 113; Loc.bol_pos_last = 2080; Loc.bp = 2086; Loc.ep = 2098} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 114; Loc.bol_pos = 2099; Loc.line_nb_last = 114; Loc.bol_pos_last = 2099; Loc.bp = 2105; Loc.ep = 2113} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 114; Loc.bol_pos = 2099; Loc.line_nb_last = 114; Loc.bol_pos_last = 2099; Loc.bp = 2114; Loc.ep = 2123} **)
+(**VERNAC_TYPE** VernacExtend **)
+(**LOC** Loc.t{Loc.fname = Loc.InFile "./test.v"; Loc.line_nb = 115; Loc.bol_pos = 2124; Loc.line_nb_last = 115; Loc.bol_pos_last = 2124; Loc.bp = 2124; Loc.ep = 2128} **)
+(**VERNAC_TYPE** VernacEndProof **)
+(**PROOF_NAME** de_morgan **)

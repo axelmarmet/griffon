@@ -1,0 +1,51 @@
+'type':'@eq (list nat) (from_list s n) (approx ((cofix from (n : nat) : Stream := Seq n (from (S n))) s) n)'
+
+'goal Logic Init Coq eq 0 Datatypes Init Coq list 0 Datatypes Init Coq nat 0 SerTop from_list s n SerTop approx cofix from forall n Datatypes Init Coq nat 0 SerTop Stream 0 lambda n Datatypes Init Coq nat 0 SerTop Stream 0 1 n from Datatypes Init Coq nat 0 2 n s n'
+
+Tree(constructor_app,
+[
+    Tree(constructor_ind, [Tree(names__inductive, [Tree(constructor_mutind, [Tree(constructor_mpfile, [Tree(constructor_dirpath, [Token(__ANON_1, 'Logic'), Token(__ANON_1, 'Init'), Token(__ANON_1, 'Coq')])]), Tree(constructor_dirpath, []), Tree(names__label__t, [Token(__ANON_1, 'eq')])]), Tree(int, [Token(SIGNED_INT, '0')])]), Tree(constructor_instance, [])]),
+    Tree(constructor_app, [Tree(constructor_ind, [Tree(names__inductive, [Tree(constructor_mutind, [Tree(constructor_mpfile, [Tree(constructor_dirpath, [Token(__ANON_1, 'Datatypes'), Token(__ANON_1, 'Init'), Token(__ANON_1, 'Coq')])]), Tree(constructor_dirpath, []), Tree(names__label__t, [Token(__ANON_1, 'list')])]), Tree(int, [Token(SIGNED_INT, '0')])]), Tree(constructor_instance, [])]), Tree(constructor_ind, [Tree(names__inductive, [Tree(constructor_mutind, [Tree(constructor_mpfile, [Tree(constructor_dirpath, [Token(__ANON_1, 'Datatypes'), Token(__ANON_1, 'Init'), Token(__ANON_1, 'Coq')])]), Tree(constructor_dirpath, []), Tree(names__label__t, [Token(__ANON_1, 'nat')])]), Tree(int, [Token(SIGNED_INT, '0')])]), Tree(constructor_instance, [])])]),
+    Tree(constructor_app, [Tree(constructor_const, [Tree(constructor_constant, [Tree(constructor_mpfile, [Tree(constructor_dirpath, [Token(__ANON_1, 'SerTop')])]), Tree(constructor_dirpath, []), Tree(names__label__t, [Token(__ANON_1, 'from_list')])]), Tree(constructor_instance, [])]), Tree(constructor_var, [Token(__ANON_1, 's')]), Tree(constructor_var, [Token(__ANON_1, 'n')])]),
+    Tree(constructor_app,
+    [
+        Tree(constructor_const, [Tree(constructor_constant, [Tree(constructor_mpfile, [Tree(constructor_dirpath, [Token(__ANON_1, 'SerTop')])]), Tree(constructor_dirpath, []), Tree(names__label__t, [Token(__ANON_1, 'approx')])]), Tree(constructor_instance, [])]),
+        Tree(constructor_app,
+        [
+            Tree(constructor_cofix,
+            [
+                Tree(constr__pcofixpoint___constr__constr____constr__constr,
+                [
+                    Tree(int, [Token(SIGNED_INT, '0')]),
+                    Tree(constr__prec_declaration___constr__constr____constr__constr,
+                    [
+                        Tree(constructor_name, [Token(__ANON_1, 'from')]),
+                        Tree(constructor_prod,
+                        [
+                            Tree(constructor_name, [Token(__ANON_1, 'n')]),
+                            Tree(constructor_ind, [Tree(names__inductive, [Tree(constructor_mutind, [Tree(constructor_mpfile, [Tree(constructor_dirpath, [Token(__ANON_1, 'Datatypes'), Token(__ANON_1, 'Init'), Token(__ANON_1, 'Coq')])]), Tree(constructor_dirpath, []), Tree(names__label__t, [Token(__ANON_1, 'nat')])]), Tree(int, [Token(SIGNED_INT, '0')])]), Tree(constructor_instance, [])]),
+                            Tree(constructor_ind, [Tree(names__inductive, [Tree(constructor_mutind, [Tree(constructor_mpfile, [Tree(constructor_dirpath, [Token(__ANON_1, 'SerTop')])]), Tree(constructor_dirpath, []), Tree(names__label__t, [Token(__ANON_1, 'Stream')])]), Tree(int, [Token(SIGNED_INT, '0')])]), Tree(constructor_instance, [])])
+                        ]),
+                        Tree(constructor_lambda,
+                        [
+                            Tree(constructor_name, [Token(__ANON_1, 'n')]),
+                            Tree(constructor_ind, [Tree(names__inductive, [Tree(constructor_mutind, [Tree(constructor_mpfile, [Tree(constructor_dirpath, [Token(__ANON_1, 'Datatypes'), Token(__ANON_1, 'Init'), Token(__ANON_1, 'Coq')])]), Tree(constructor_dirpath, []), Tree(names__label__t, [Token(__ANON_1, 'nat')])]), Tree(int, [Token(SIGNED_INT, '0')])]), Tree(constructor_instance, [])]),
+                            Tree(constructor_app,
+                            [
+                                Tree(constructor_construct, [Tree(names__constructor, [Tree(names__inductive, [Tree(constructor_mutind, [Tree(constructor_mpfile, [Tree(constructor_dirpath, [Token(__ANON_1, 'SerTop')])]), Tree(constructor_dirpath, []), Tree(names__label__t, [Token(__ANON_1, 'Stream')])]), Tree(int, [Token(SIGNED_INT, '0')])]), Tree(int, [Token(SIGNED_INT, '1')])]), Tree(constructor_instance, [])]),
+                                Tree(constructor_rel, [Tree(int, [Token(SIGNED_INT, '1')])]),
+                                Tree(constructor_app,
+                                [
+                                    Tree(constructor_rel, [Tree(int, [Token(SIGNED_INT, '2')])]),
+                                    Tree(constructor_app,
+                                    [
+                                        Tree(constructor_construct, [Tree(names__constructor, [Tree(names__inductive, [Tree(constructor_mutind, [Tree(constructor_mpfile, [Tree(constructor_dirpath, [Token(__ANON_1, 'Datatypes'), Token(__ANON_1, 'Init'), Token(__ANON_1, 'Coq')])]), Tree(constructor_dirpath, []), Tree(names__label__t, [Token(__ANON_1, 'nat')])]), Tree(int, [Token(SIGNED_INT, '0')])]), Tree(int, [Token(SIGNED_INT, '2')])]), Tree(constructor_instance, [])]),
+                                        Tree(constructor_rel, [Tree(int, [Token(SIGNED_INT, '1')])])
+                                    ])
+                                ])
+                            ])
+                        ])
+                    ])
+                ])
+            ]),
+            Tree(constructor_var, [Token(__ANON_1, 's')])]), Tree(constructor_var, [Token(__ANON_1, 'n')])])])
