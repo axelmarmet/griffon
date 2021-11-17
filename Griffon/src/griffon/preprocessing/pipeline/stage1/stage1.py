@@ -5,6 +5,9 @@ import json
 import argparse
 from argparse import Namespace
 from typing import Dict, List, Optional, Tuple
+from copy import deepcopy
+
+
 
 import multiprocessing as mp
 
@@ -153,7 +156,7 @@ def process_project(packed_args:Tuple[Namespace,str]):
                     res = find_in_list(local_context, lambda x : x.name == action)
                     lemma = None
                     if res != None:
-                        lemma = res.tokens
+                        lemma = deepcopy(res.tokens)
                     # search in environment
                     if lemma is None:
                         res = find_in_list(proof_data["env"]["constants"], lambda x : x["short_ident"] == action)

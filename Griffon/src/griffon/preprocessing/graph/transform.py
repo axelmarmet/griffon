@@ -3,7 +3,9 @@ from typing import List, Dict
 import networkx as nx
 import torch
 
-
+# to fight a weird interaction with nx
+import logging
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 from griffon.coq_dataclasses import Stage1Sample, Stage1Statement,Stage2Sample, Stage2Statement
 from griffon.preprocessing.graph.alg import preprocess_adj

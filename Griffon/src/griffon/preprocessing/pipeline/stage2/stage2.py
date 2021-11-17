@@ -12,8 +12,15 @@ from griffon.preprocessing.graph.distances import PersonalizedPageRank, Shortest
 from griffon.preprocessing.graph.binning import ExponentialBinning
 from griffon.preprocessing.graph.transform import DistancesTransformer
 
+import multiprocessing as mp
+
+import itertools
+
 from glob import glob
 from tqdm import tqdm
+
+
+from typing import Tuple
 
 
 args = Namespace(vocab_path="../../../../../models/vocab.pickle",
@@ -70,7 +77,9 @@ def get_distances_transformer(config):
     return DistancesTransformer(distance_metrics, db)
 
 
-def process_project(args: Namespace, project_root: str):
+def process_project(packed_args:Tuple[Namespace,str]):
+
+    args, project_root = packed_args
 
     root_out_dir = os.path.join(args.stage2_root, "tmp")
 
@@ -98,7 +107,6 @@ def process_project(args: Namespace, project_root: str):
         pickle.dump(sample, open(path, "wb"))
 
     for i, sample in enumerate(samples):
-        print(i)
         process_sample(sample)
 
 if __name__ == "__main__":
@@ -128,5 +136,7 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
     project_pattern = os.path.join(args.stage1_root, "**", "*")
     projects = glob(project_pattern)
-    for project in tqdm(projects):
-        process_project(args, project)
+
+    with mp.Pool(args.threads) as pool:
+        for _ in tqdm(pool.imap(process_project, zip(itertools.repeat(args), projects)), total=len(projects)):
+            pass
