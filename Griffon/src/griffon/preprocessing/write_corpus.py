@@ -12,6 +12,8 @@ from CoqGym.utils import iter_proofs
 
 def write_corpus(args:Namespace):
 
+
+
     projs_split = json.load(open(args.splits_file))
 
     def process_proof(filename, proof_data):

@@ -3,10 +3,11 @@ from typing import List, Dict
 import networkx as nx
 import torch
 
-from code_transformer.preprocessing.pipeline.stage1 import CTStage1Sample
-from code_transformer.preprocessing.pipeline.stage2 import CTStage2Sample
-from code_transformer.preprocessing.graph.alg import preprocess_adj
-from code_transformer.preprocessing.graph.distances import DistanceBinning, GraphDistanceMetric
+
+
+from griffon.coq_dataclasses import Stage1Sample, Stage1Statement,Stage2Sample, Stage2Statement
+from griffon.preprocessing.graph.alg import preprocess_adj
+from griffon.preprocessing.graph.distances import DistanceBinning, GraphDistanceMetric
 
 
 class DistancesTransformer:
@@ -18,12 +19,11 @@ class DistancesTransformer:
         self.distance_metrics = distance_metrics
         self.distance_binning = distance_binning
 
-    def __call__(self, sample: CTStage1Sample) -> CTStage2Sample:
-        G = sample.ast.to_networkx(create_using=nx.Graph)
+    def process_statement(self, statement:Stage1Statement)->Stage2Statement:
+        G = nx.from_dict_of_lists(statement.ast, create_using=nx.Graph)
         adj = torch.tensor(nx.to_numpy_matrix(G))
         graph_sample = {
             'adj': adj,
-            'node_types': [node.node_type for node in sample.ast.nodes.values()],
             'distances': {}
         }
         for distance_metric in self.distance_metrics:
@@ -36,10 +36,14 @@ class DistancesTransformer:
         if self.distance_binning:
             graph_sample['distances'] = list(graph_sample['distances'].values())
 
-        return CTStage2Sample(sample.tokens, graph_sample, sample.token_mapping, sample.stripped_code_snippet,
-                              sample.func_name, sample.docstring,
-                              sample.encoded_func_name if hasattr(sample, 'encoded_func_name') else None)
+        return Stage2Statement(statement.name, statement.tokens, adj, graph_sample["distances"],
+                               statement.token_to_node)
 
+
+    def __call__(self, sample: Stage1Sample) -> Stage2Sample:
+        processed_hypotheses = [self.process_statement(hypo) for hypo in sample.hypotheses]
+        processed_goal = self.process_statement(sample.goal)
+        return Stage2Sample(processed_hypotheses, processed_goal, sample.lemma_used)
 
 # =============================================================================
 # Experiment-Time distance transforms

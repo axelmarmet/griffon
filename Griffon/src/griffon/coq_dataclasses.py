@@ -1,6 +1,7 @@
 """
     various dataclasses
 """
+from collections import namedtuple
 from dataclasses import dataclass
 
 from typing import List, Dict
@@ -11,6 +12,8 @@ from CoqGym.utils import SexpCache
 import networkx as nx
 
 from lark.tree import Tree
+from torch import Tensor
+
 
 @dataclass
 class GoalObject:
@@ -61,22 +64,45 @@ class GallinaObject:
 
 
 @dataclass
+class Stage1Token:
+    subtokens : List[str]
+
+@dataclass
+class Stage2Token:
+    subtokens : List[int]
+
+Distance = namedtuple("Distance", ["distances", "bins", "name"])
+
+@dataclass
 class Stage1Statement:
     name :  str
-    tokens : List[str]
-    ast: nx.Graph
-    token_to_node : Dict[str,int]
+    tokens : List[Stage1Token]
+    ast: Dict[int, List[int]]
+    token_to_node : Dict[int,int]
 
-# @dataclass
-# class Stage2Statement:
+    def __str__(self):
+        return self.name + " : " + " ".join(["_".join([str(subtoken) for subtoken in token.subtokens]) for token in self.tokens])
+
+@dataclass
+class Stage2Statement:
+    name :  str
+    tokens : List[Stage2Token]
+    adjacency_matrix : Tensor
+    distances : List[Distance]
+    token_to_node : Dict[str,int]
 
 
 @dataclass
 class Stage1Sample:
     hypotheses : List[Stage1Statement]
     goal : Stage1Statement
-    lemma_used : List[str]
+    lemma_used : List[Stage1Token]
 
+@dataclass
+class Stage2Sample:
+    hypotheses : List[Stage2Statement]
+    goal : Stage2Statement
+    lemma_used : List[Stage2Token]
 
 @dataclass
 class RelatedSentences:
