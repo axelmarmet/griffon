@@ -29,7 +29,8 @@ def preprocess_adj(adj, asserts=True):
         deg = adj_tilde.sum(1)
         deg_sqrt_inv = 1 / torch.sqrt(deg)
         adj_norm = adj_tilde * deg_sqrt_inv[:, None] * deg_sqrt_inv[None, :]
-
+    else:
+        raise ValueError(f"type {type(adj)} is not handled")
     return adj_norm
 
 
@@ -72,8 +73,8 @@ def tree_shortest_paths(adj, undirected=True):
     return torch.tensor(all_sp).clamp_min(-1)
 
 
-def next_sibling_edges(tree_edges: torch.tensor):
-    N = tree_edges.max() + 1
+def next_sibling_edges(tree_edges: torch.Tensor):
+    N = int(tree_edges.max().item()) + 1
 
     adj_downwards = torch.zeros([N, N], dtype=torch.float32)
     adj_downwards[tuple(tree_edges.T)] = 1

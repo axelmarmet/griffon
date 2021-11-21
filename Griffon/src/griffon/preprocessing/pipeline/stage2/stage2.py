@@ -101,10 +101,10 @@ def process_project(packed_args:Tuple[Namespace,str]):
         sample:Stage1Sample = pickle.load(open(filename, "rb"))
 
         sample = vocab_transformer(sample)
-        sample = distances_transformer(sample)
+        stage_2_sample = distances_transformer(sample)
 
         path = os.path.join(out_dir, sample_file)
-        pickle.dump(sample, open(path, "wb"))
+        pickle.dump(stage_2_sample, open(path, "wb"))
 
     for i, sample in enumerate(samples):
         process_sample(sample)
