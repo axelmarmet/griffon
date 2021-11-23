@@ -17,7 +17,7 @@ from lark.exceptions import UnexpectedCharacters, ParseError
 
 from CoqGym.ASTactic.tac_grammar import CFG, TreeBuilder, NonterminalNode, TerminalNode
 from CoqGym.gallina import GallinaTermParser
-from CoqGym.utils import iter_proofs, SexpCache, iter_proofs_in_file
+from CoqGym.utils import iter_proofs, SexpCache
 
 from nltk.tokenize.regexp import RegexpTokenizer
 from griffon.constants import MAX_NUM_TOKEN
@@ -39,7 +39,7 @@ def init_process(args:Namespace):
     global grammar
     global tree_builder
 
-    statement_creator = Stage1StatementCreator(GallinaTermParser(caching=False), RegexpTokenizer(r"[^\W_]+"))
+    statement_creator = Stage1StatementCreator(GallinaTermParser(caching=False), RegexpTokenizer(r"[^\W_]+|[:,().]"))
     sexp_cache = SexpCache(args.sexp_cache, readonly=True)
     grammar = CFG(args.tactic_grammar, "tactic_expr")
     tree_builder = TreeBuilder(grammar)
@@ -159,8 +159,10 @@ def process_file(args:Namespace, proof_path:str):
                     res = find_in_list(local_context, lambda x : x.name == action)
                     lemma = None
                     if res != None:
-                        lemma = deepcopy(res.tokens)
-                    # search in environment
+                        hypotheses = proof_data["goals"][str(goal_id)]['hypotheses']
+                        hypothesis = find_in_list(hypotheses, lambda h : res.name in h['idents']) # type: ignore
+                        assert hypothesis is not None
+                        lemma = statement_creator.only_tokens(sexp_cache[hypothesis["sexp"]])                    # search in environment
                     if lemma is None:
                         res = find_in_list(proof_data["env"]["constants"], lambda x : x["short_ident"] == action)
                         if res != None:

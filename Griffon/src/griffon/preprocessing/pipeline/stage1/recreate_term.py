@@ -42,6 +42,8 @@ class TreeShortener(Transformer):
         for child in children:
             if isinstance(child, Tree) and child.data != "constructor_rel" and len(child.children) == 1:
                 new_children.append(child.children[0])
+            elif isinstance(child, Tree) and child.data == "names__inductive":
+                new_children.append(child.children[0])
             else:
                 new_children.append(child)
         return Tree(data, new_children)
