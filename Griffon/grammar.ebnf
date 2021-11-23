@@ -1,0 +1,113 @@
+constr__constr : "(" "Rel" int ")"    -> constructor_rel
+               | "(" "Var" _names__id__t ")"    -> constructor_var
+               | "(" "Meta" constr__metavariable ")"    -> constructor_meta
+               | "(" "Evar" constr__pexistential___constr__constr ")"    -> constructor_evar
+               | "(" "Sort" sorts__t ")"    -> constructor_sort
+               | "(" "Cast" constr__constr constr__cast_kind constr__constr ")"    -> constructor_cast
+               | "(" "Prod" names__name__t constr__constr constr__constr ")"    -> constructor_prod
+               | "(" "Lambda" names__name__t constr__constr constr__constr ")"    -> constructor_lambda
+               | "(" "LetIn" names__name__t constr__constr constr__constr constr__constr ")"    -> constructor_letin
+               | "(" "App" constr__constr _array___constr__constr ")"    -> constructor_app
+               | "(" "Const" _tuple___names__constant__t____univ__instance__t ")"    -> constructor_const
+               | "(" "Ind" _tuple___names__inductive____univ__instance__t ")"    -> constructor_ind
+               | "(" "Construct" _tuple___names__constructor____univ__instance__t ")"    -> constructor_construct
+               | "(" "Case" constr__case_info constr__constr constr__constr _array___constr__constr ")"    -> constructor_case
+               | "(" "Fix" constr__pfixpoint___constr__constr____constr__constr ")"    -> constructor_fix
+               | "(" "CoFix" constr__pcofixpoint___constr__constr____constr__constr ")"    -> constructor_cofix
+               | "(" "Proj" names__projection__t constr__constr ")"    -> constructor_proj
+
+int : SIGNED_INT
+
+_names__id__t : "(Id" /[^\)]+/ ")"
+
+constr__metavariable : SIGNED_INT
+
+constr__pexistential___constr__constr : "(" constr__existential_key _array___constr__constr ")"
+
+constr__existential_key : "(" "Ser_Evar" int ")"    -> constructor_ser_evar
+
+_array___constr__constr : "(" constr__constr* ")"
+
+sorts__t : "Prop"    -> constructor_prop
+         | "Set"    -> constructor_set
+         | "(" "Type" univ__universe__t ")"    -> constructor_type
+
+univ__universe__t : "(" _tuple___univ__level__t____int* ")"
+
+_tuple___univ__level__t____int : "(" univ__level__t int ")"
+
+univ__level__t : "(" "ULevel" int ")"    -> constructor_ulevel
+
+constr__cast_kind : "VMcast"    -> constructor_vmcast
+                  | "NATIVEcast"    -> constructor_nativecast
+                  | "DEFAULTcast"    -> constructor_defaultcast
+                  | "REVERTcast"    -> constructor_revertcast
+
+names__name__t : "Anonymous"    -> constructor_anonymous
+               | "(" "Name" _names__id__t ")"    -> constructor_name
+
+_tuple___names__constant__t____univ__instance__t : "(" names__constant__t univ__instance__t ")"
+
+names__constant__t : "(" "Constant" names__modpath__t names__dirpath__t names__label__t ")"    -> constructor_constant
+
+names__modpath__t : "(" "MPfile" names__dirpath__t ")"    -> constructor_mpfile
+                  | "(" "MPbound" names__mbid__t ")"    -> constructor_mpbound
+                  | "(" "MPdot" names__modpath__t names__label__t ")"    -> constructor_mpdot
+
+names__dirpath__t : "(" "DirPath" _list____names__id__t ")"    -> constructor_dirpath
+
+_list____names__id__t : "(" _names__id__t* ")"
+
+names__mbid__t : "(" "Mbid" _names__id__t names__dirpath__t ")"    -> constructor_mbid
+
+names__label__t : "(Id" /[^\)]+/ ")"
+
+univ__instance__t : "(" "Instance" _array___univ__level__t ")"    -> constructor_instance
+
+_array___univ__level__t : "(" univ__level__t* ")"
+
+_tuple___names__inductive____univ__instance__t : "(" names__inductive univ__instance__t ")"
+
+names__inductive : "(" names__mutind__t int ")"
+
+names__mutind__t : "(" "Mutind" names__modpath__t names__dirpath__t names__label__t ")"    -> constructor_mutind
+
+_tuple___names__constructor____univ__instance__t : "(" names__constructor univ__instance__t ")"
+
+names__constructor : "(" names__inductive int ")"
+
+constr__case_info : "(" "(" /ci_ind/ names__inductive ")" "(" /ci_npar/ int ")" "(" /ci_cstr_ndecls/ _array___int ")" "(" /ci_cstr_nargs/ _array___int ")" "(" /ci_pp_info/ constr__case_printing ")" ")"
+
+_array___int : "(" int* ")"
+
+constr__case_printing : "(" "(" /ind_tags/ _list___bool ")" "(" /cstr_tags/ _array____list___bool ")" "(" /style/ constr__case_style ")" ")"
+
+_list___bool : "(" bool* ")"
+
+bool : "true"
+     | "false"
+
+_array____list___bool : "(" _list___bool* ")"
+
+constr__case_style : "LetStyle"    -> constructor_letstyle
+                   | "IfStyle"    -> constructor_ifstyle
+                   | "LetPatternStyle"    -> constructor_letpatternstyle
+                   | "MatchStyle"    -> constructor_matchstyle
+                   | "RegularStyle"    -> constructor_regularstyle
+
+constr__pfixpoint___constr__constr____constr__constr : "(" _tuple____array___int____int constr__prec_declaration___constr__constr____constr__constr ")"
+
+_tuple____array___int____int : "(" _array___int int ")"
+
+constr__prec_declaration___constr__constr____constr__constr : "(" _array___names__name__t _array___constr__constr _array___constr__constr ")"
+
+_array___names__name__t : "(" names__name__t* ")"
+
+constr__pcofixpoint___constr__constr____constr__constr : "(" int constr__prec_declaration___constr__constr____constr__constr ")"
+
+names__projection__t : "(" "Projection" names__constant__t bool ")"    -> constructor_projection
+        %import common.STRING_INNER
+        %import common.ESCAPED_STRING
+        %import common.SIGNED_INT
+        %import common.WS
+        %ignore WS

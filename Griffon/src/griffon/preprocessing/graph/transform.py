@@ -38,8 +38,7 @@ class DistancesTransformer:
 
                 distances.append((indices, bins, distance_metric.get_name()))
 
-        return Stage2Statement(statement.name, statement.vocabularized_tokens, distances,
-                               statement.token_to_node)
+        return Stage2Statement(statement.name, statement.vocabularized_tokens, distances)
 
 
     def __call__(self, sample: Stage1Sample) -> Stage2Sample:

@@ -17,6 +17,8 @@ import multiprocessing as mp
 import itertools
 
 from glob import glob
+import shutil
+
 from tqdm import tqdm
 
 
@@ -109,6 +111,25 @@ def process_project(packed_args:Tuple[Namespace,str]):
     for i, sample in enumerate(samples):
         process_sample(sample)
 
+def order_files(root:str):
+    splits = ["train", "test", "valid"]
+    for split in splits:
+        proof_index = 0
+        output_dir = os.path.join(root, split)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        tmp_root = os.path.join(root, "tmp", split)
+        assert os.path.exists(tmp_root)
+
+        files = sorted(glob(os.path.join(tmp_root, "**", "*.pickle"), recursive=True))
+        for file in files:
+            new_filepath = os.path.join(output_dir, 'proof{:08d}.pickle'.format(proof_index))
+            proof_index += 1
+            os.rename(file, new_filepath)
+
+    shutil.rmtree(os.path.join(root, "tmp"))
+
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
         description="""
@@ -140,3 +161,5 @@ if __name__ == "__main__":
     with mp.Pool(args.threads) as pool:
         for _ in tqdm(pool.imap(process_project, zip(itertools.repeat(args), projects)), total=len(projects)):
             pass
+
+    order_files(args.stage2_root)
