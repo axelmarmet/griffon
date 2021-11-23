@@ -175,7 +175,7 @@ def process_file(args:Namespace, proof_path:str):
 
                     if lemma is not None:
                         # prune samples that are too big, a cutoff of 128 is sufficient to keep 98% of all samples
-                        if len(goal.tokens) > MAX_NUM_TOKEN or len(lemma) > MAX_NUM_TOKEN:
+                        if len(goal.tokens) > MAX_NUM_TOKEN or len(lemma) > 2*MAX_NUM_TOKEN:
                             continue
                         local_context = [hypothesis for hypothesis in local_context if len(hypothesis.tokens) <= 128]
 
