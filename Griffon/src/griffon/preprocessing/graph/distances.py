@@ -21,8 +21,8 @@ class GraphDistanceMetric(ABC):
     def __init__(self, name):
         self.name = name
 
-    def __call__(self, adjacency_matrix: torch.tensor) -> torch.tensor:
-        pass
+    def __call__(self, adjacency_matrix: torch.Tensor) -> torch.Tensor:
+        return adjacency_matrix
 
     def get_name(self):
         return self.name
@@ -69,7 +69,7 @@ class AncestorShortestPaths(AbstractShortestPaths):
     def __init__(self, forward=True, backward=True, negative_reverse_dists=True, threshold=None):
         super(AncestorShortestPaths, self).__init__(self.name, forward, backward, negative_reverse_dists, threshold)
 
-    def __call__(self, adjacency_matrix: torch.tensor) -> torch.tensor:
+    def __call__(self, adjacency_matrix: torch.Tensor) -> torch.Tensor:
         G = nx.from_numpy_array(torch.triu(adjacency_matrix).numpy(),
                                 create_using=nx.DiGraph)
 
@@ -84,7 +84,7 @@ class SiblingShortestPaths(AbstractShortestPaths):
     def __init__(self, forward=True, backward=True, negative_reverse_dists=True, threshold=None):
         super(SiblingShortestPaths, self).__init__(self.name, forward, backward, negative_reverse_dists, threshold)
 
-    def __call__(self, adjacency_matrix: torch.tensor) -> torch.tensor:
+    def __call__(self, adjacency_matrix: torch.Tensor) -> torch.Tensor:
         edges = torch.triu(adjacency_matrix).nonzero()
         sp_length = next_sibling_shortest_paths(edges)
         pw_dists = self.calculate_pw_dists(adjacency_matrix, sp_length)
@@ -98,7 +98,7 @@ class ShortestPaths(GraphDistanceMetric):
         super(ShortestPaths, self).__init__(self.name)
         self.threshold = threshold
 
-    def __call__(self, adjacency_matrix: torch.tensor) -> torch.tensor:
+    def __call__(self, adjacency_matrix: torch.Tensor) -> torch.Tensor:
         shortest_paths = tree_shortest_paths(adjacency_matrix).long()
 
         if self.threshold:
@@ -120,7 +120,7 @@ class PersonalizedPageRank(GraphDistanceMetric):
         self.log = log
         self.threshold = threshold
 
-    def __call__(self, adjacency_matrix: torch.tensor) -> torch.tensor:
+    def __call__(self, adjacency_matrix: torch.Tensor) -> torch.Tensor:
         """
         :param adjacency_matrix: can be multiple adjacency matrices. The first dimension remains untouched
         :return:
@@ -158,7 +158,7 @@ class DistanceBinning:
         self.n_fixed = n_fixed
         self.trans_func = trans_func
 
-    def __call__(self, distance_matrix: torch.tensor):
+    def __call__(self, distance_matrix: torch.Tensor):
         # continuous distances (personalized page rank)
         if distance_matrix.dtype in [torch.float32, torch.float16, torch.float64]:
             dist_values = distance_matrix.reshape(-1).cpu().numpy()

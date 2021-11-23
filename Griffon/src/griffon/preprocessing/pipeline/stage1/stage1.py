@@ -20,10 +20,11 @@ from CoqGym.gallina import GallinaTermParser
 from CoqGym.utils import iter_proofs, SexpCache, iter_proofs_in_file
 
 from nltk.tokenize.regexp import RegexpTokenizer
+from griffon.constants import MAX_NUM_TOKEN
 from griffon.preprocessing.pipeline.stage1.recreate_term import Stage1StatementCreator
 
-from griffon.utils import find_in_list, get_path_relative_to_data
-from griffon.coq_dataclasses import GallinaObject, Stage1Sample, Stage1Statement
+from griffon.utils import find_in_list, get_path_relative_to_data, iter_proofs_in_file
+from griffon.coq_dataclasses import Stage1Sample, Stage1Statement
 
 from tqdm import tqdm
 
@@ -65,8 +66,7 @@ def process_file(args:Namespace, proof_path:str):
     elif coq_project in projs_split["projs_test"]:
         split = "test"
     else:
-        raise f"{coq_project} not in splits.json"
-
+        raise  ValueError(f"{coq_project} not in splits.json")
 
 
     out_dirpath = os.path.join(args.output, split, coq_project, filename)
@@ -83,7 +83,7 @@ def process_file(args:Namespace, proof_path:str):
             [some json]: the return
         """
         tree = tree_builder.transform(grammar.parser.parse(tac_str))
-        assert tac_str.replace(" ", "") == tree.to_tokens().replace(" ", "")
+        assert tac_str.replace(" ", "") == tree.to_tokens().replace(" ", "") # type: ignore
         actions = []
 
         def gather_actions(node):
@@ -93,7 +93,7 @@ def process_file(args:Namespace, proof_path:str):
                 assert isinstance(node, TerminalNode)
                 actions.append(node.token)
 
-        tree.traverse_pre(gather_actions)
+        tree.traverse_pre(gather_actions) # type: ignore
         return actions
 
     def parse_goal(goal_to_parse)->Tuple[List[Stage1Statement], Stage1Statement]:
@@ -107,7 +107,7 @@ def process_file(args:Namespace, proof_path:str):
         """
         goal_statement = statement_creator(sexp_cache[goal_to_parse["sexp"]], "goal")
 
-        local_context:List[GallinaObject] = []
+        local_context:List[Stage1Statement] = []
         for _, hypothesis in enumerate(goal_to_parse["hypotheses"]):
             for ident in hypothesis["idents"]:
                 sexp = sexp_cache[hypothesis["sexp"]]
@@ -173,7 +173,7 @@ def process_file(args:Namespace, proof_path:str):
 
                     if lemma is not None:
                         # prune samples that are too big, a cutoff of 128 is sufficient to keep 98% of all samples
-                        if len(goal.tokens) > 128 or len(lemma) > 128:
+                        if len(goal.tokens) > MAX_NUM_TOKEN or len(lemma) > MAX_NUM_TOKEN:
                             continue
                         local_context = [hypothesis for hypothesis in local_context if len(hypothesis.tokens) <= 128]
 

@@ -22,6 +22,9 @@ class DistancesTransformer:
         self.distance_binning = distance_binning
 
     def process_statement(self, statement:Stage1Statement)->Stage2Statement:
+
+        assert statement.vocabularized_tokens is not None
+
         G = nx.from_dict_of_lists(statement.ast, create_using=nx.Graph)
         adj = torch.tensor(nx.to_numpy_matrix(G))
         distances = []
@@ -35,8 +38,7 @@ class DistancesTransformer:
 
                 distances.append((indices, bins, distance_metric.get_name()))
 
-        return Stage2Statement(statement.name, statement.tokens,distances,
-                               statement.token_to_node)
+        return Stage2Statement(statement.name, statement.vocabularized_tokens, distances)
 
 
     def __call__(self, sample: Stage1Sample) -> Stage2Sample:

@@ -1,11 +1,11 @@
 from lark import Tree, Token, Transformer
 from lark.visitors import Discard
 
-
 from CoqGym.gallina import GallinaTermParser
 import nltk
 
 from typing import List, Set, Tuple, Union
+from griffon.constants import NUM_SUB_TOKENS
 
 
 from griffon.coq_dataclasses import Stage1Statement, Stage1Token
@@ -81,11 +81,18 @@ class MyToken():
     def __str__(self):
         return self.value
 
-def add_prefix_preorder_id(node : Union[Tree,Token], start_index:int = 0)->Tuple[Union[Tree,MyToken], int]:
+class MyTree():
+
+    def __init__(self, data:str, children:List[Union['MyTree', MyToken]], id:int):
+        self.data = data
+        self.children = children
+        self.id = id
+
+def add_prefix_preorder_id(node : Union[Tree,Token], start_index:int = 0)->Tuple[Union[MyTree,MyToken], int]:
     if not isinstance(node, Tree):
         return (MyToken(node.value, start_index), start_index + 1)
     else:
-        node.id = start_index
+
         new_start_index = start_index + 1
         new_children = []
         for child in node.children:
@@ -93,10 +100,10 @@ def add_prefix_preorder_id(node : Union[Tree,Token], start_index:int = 0)->Tuple
             new_child, new_start_index = res
             new_children.append(new_child)
 
-        node.children = new_children
-        return node, new_start_index
+        new_node = MyTree(node.data, new_children, start_index)
+        return new_node, new_start_index
 
-def get_token_sequence(de_bruijn_stack:List[str], node:Union[Tree, Token])->List[Tuple[str, int]]:
+def get_token_sequence(de_bruijn_stack:List[str], node:Union[MyTree, MyToken])->List[Tuple[str, int]]:
     if isinstance(node, MyToken):
         return [(node.value, node.id)]
     elif node.data == "constructor_anonymous":
@@ -116,7 +123,7 @@ def get_token_sequence(de_bruijn_stack:List[str], node:Union[Tree, Token])->List
         # we unite all of the path component in one token to limit the number of tokens
         if node.children:
             assert (all(isinstance(child, MyToken) for child in node.children))
-            return [("_".join(child.value for child in node.children), node.id)]
+            return [("_".join(child.value for child in node.children), node.id)] # type: ignore
         else:
             return []
 
@@ -125,9 +132,9 @@ def get_token_sequence(de_bruijn_stack:List[str], node:Union[Tree, Token])->List
         label, type_, term = node.children
 
         if node.data == "constructor_prod":
-            result = [("forall", node.id)]
+            result:List[Tuple[str, int]] = [("forall", node.id)]
         else:
-            result = [("lambda", node.id)]
+            result:List[Tuple[str, int]] = [("lambda", node.id)]
 
         new_var = get_token_sequence(de_bruijn_stack, label)
 
@@ -239,8 +246,8 @@ def get_token_sequence(de_bruijn_stack:List[str], node:Union[Tree, Token])->List
 
         return res
 
-def get_dict_of_list(node:Union[Tree, MyToken]):
-    def inner(node:Union[Tree, MyToken])->List[Tuple[int, List[int]]]:
+def get_dict_of_list(node:Union[MyTree, MyToken]):
+    def inner(node:Union[MyTree, MyToken])->List[Tuple[int, List[int]]]:
         if isinstance(node, MyToken):
             return [(node.id, [])]
         else:
@@ -258,6 +265,7 @@ def insert_name(name:str, tree:Tree):
     children = [MyToken(name, 0), tree]
     return Tree("custom_node", children)
 
+
 class Stage1StatementCreator():
 
     def __init__(self, gallina_parser : GallinaTermParser, sub_tokenizer:nltk.tokenize.RegexpTokenizer):
@@ -271,14 +279,16 @@ class Stage1StatementCreator():
         transform = HandleSpecialNodes() * TreeShortener() * TreePruner()
         tree = transform.transform(tree)
 
-        add_prefix_preorder_id(tree)
+        tree, _ = add_prefix_preorder_id(tree)
         seq = get_token_sequence([], tree)
 
-        tokens, nodes = zip(*seq)
-        tokens = [Stage1Token(self.sub_tokenizer.tokenize(token)) for token in tokens]
-        tokens_to_node = list(nodes)
+        tokens:List[str] = [token for token, _ in seq]
+        tokens_to_node:List[int] = [node_idx for _, node_idx in seq]
+
+        stage_1_tokens = [self.get_stage1token(token) for token in tokens]
+
         graph = get_dict_of_list(tree)
-        return Stage1Statement(statement_name, tokens, graph, tokens_to_node)
+        return Stage1Statement(statement_name, stage_1_tokens, None, graph, tokens_to_node)
 
     def only_tokens(self, sexp)->List[Stage1Token]:
         tree = self.parser.parse(sexp)
@@ -286,8 +296,14 @@ class Stage1StatementCreator():
         transform = HandleSpecialNodes() * TreeShortener() * TreePruner()
         tree = transform.transform(tree)
 
-        add_prefix_preorder_id(tree)
+        tree, _ = add_prefix_preorder_id(tree)
         seq = get_token_sequence([], tree)
-        tokens, _ = zip(*seq)
-        tokens = [Stage1Token(self.sub_tokenizer.tokenize(token)) for token in tokens]
-        return tokens
+        tokens:List[str] = [token for token, _ in seq]
+
+        return [self.get_stage1token(token) for token in tokens]
+
+    def get_stage1token(self, token:str)->Stage1Token:
+        subtokens = self.sub_tokenizer.tokenize(token)
+        if len(subtokens) > NUM_SUB_TOKENS:
+            subtokens = subtokens[-NUM_SUB_TOKENS:]
+        return Stage1Token(subtokens)

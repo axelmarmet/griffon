@@ -1,13 +1,13 @@
 setup.py
 src/griffon/__init__.py
+src/griffon/beam_search.py
+src/griffon/constants.py
 src/griffon/coq_dataclasses.py
 src/griffon/dataloader.py
-src/griffon/extract_recommandations.py
-src/griffon/preprocessing.py
-src/griffon/translation_transformer.py
+src/griffon/simple_test.py
 src/griffon/utils.py
-src/griffon/write_corpus.py
 src/griffon.egg-info/PKG-INFO
 src/griffon.egg-info/SOURCES.txt
 src/griffon.egg-info/dependency_links.txt
 src/griffon.egg-info/top_level.txt
+test/test_extract_recommandations.py
