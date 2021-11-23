@@ -103,7 +103,7 @@ def add_prefix_preorder_id(node : Union[Tree,Token], start_index:int = 0)->Tuple
         new_node = MyTree(node.data, new_children, start_index)
         return new_node, new_start_index
 
-def get_token_sequence(de_bruijn_stack:List[str], node:Union[MyTree, MyToken])->List[Tuple[str, int]]:
+def get_token_sequence(de_bruijn_stack:List[str], node:Union[MyTree, MyToken], verbose:bool=False)->List[Tuple[str, int]]:
     if isinstance(node, MyToken):
         return [(node.value, node.id)]
     elif node.data == "constructor_anonymous":
@@ -118,12 +118,15 @@ def get_token_sequence(de_bruijn_stack:List[str], node:Union[MyTree, MyToken])->
     elif node.data == "constructor_instance":
         return []
     elif node.data == "constructor_dirpath":
-        # is not in the general case because it can be empty
-
-        # we unite all of the path component in one token to limit the number of tokens
         if node.children:
-            assert (all(isinstance(child, MyToken) for child in node.children))
-            return [("_".join(child.value for child in node.children), node.id)] # type: ignore
+            (all(isinstance(child, MyToken) for child in node.children))
+            if verbose:
+                result = [(".", node.id)] * (len(node.children) * 2 - 1)
+                result[0::2] = [(child.value, child.id) for child in node.children] # type: ignore
+                return result
+            else:
+                # we unite all of the path component in one token to limit the number of tokens
+                return [("_".join(child.value for child in node.children), node.id)] # type: ignore
         else:
             return []
 
@@ -136,16 +139,22 @@ def get_token_sequence(de_bruijn_stack:List[str], node:Union[MyTree, MyToken])->
         else:
             result:List[Tuple[str, int]] = [("lambda", node.id)]
 
-        new_var = get_token_sequence(de_bruijn_stack, label)
+        new_var = get_token_sequence(de_bruijn_stack, label, verbose)
 
         assert len(new_var) == 1
         result += new_var
 
-        result += get_token_sequence(de_bruijn_stack, type_)
+        if verbose:
+            result.append((":", node.id))
+
+        result += get_token_sequence(de_bruijn_stack, type_, verbose)
+
+        if verbose:
+            result.append((",", node.id))
 
         # append the new bound variable to the top of the de_bruijn_stack
         de_bruijn_stack.append(new_var[0][0])
-        result += get_token_sequence(de_bruijn_stack, term)
+        result += get_token_sequence(de_bruijn_stack, term, verbose)
         de_bruijn_stack.pop()
 
         return result
@@ -165,11 +174,11 @@ def get_token_sequence(de_bruijn_stack:List[str], node:Union[MyTree, MyToken])->
 
         result = [("match", node.id)]
 
-        result += get_token_sequence(de_bruijn_stack, type_info)
-        result += get_token_sequence(de_bruijn_stack, discriminant)
+        result += get_token_sequence(de_bruijn_stack, type_info, verbose)
+        result += get_token_sequence(de_bruijn_stack, discriminant, verbose)
 
         for branch in branches:
-            result += get_token_sequence(de_bruijn_stack, branch)
+            result += get_token_sequence(de_bruijn_stack, branch, verbose)
 
         return result
 
@@ -181,15 +190,15 @@ def get_token_sequence(de_bruijn_stack:List[str], node:Union[MyTree, MyToken])->
         # we need to look ahead in the children to get the bound variables
         # and hide the debruijn mechanism
 
-        names = [get_token_sequence(de_bruijn_stack, name) for name in node.children[0::3]]
+        names = [get_token_sequence(de_bruijn_stack, name, verbose) for name in node.children[0::3]]
 
-        type_infos = [get_token_sequence(de_bruijn_stack, type_info) for type_info in node.children[1::3]]
+        type_infos = [get_token_sequence(de_bruijn_stack, type_info, verbose) for type_info in node.children[1::3]]
 
         for l in names:
             name = l[0][0]
             de_bruijn_stack.append(name)
 
-        bodies = [get_token_sequence(de_bruijn_stack, body) for body in node.children[2::3]]
+        bodies = [get_token_sequence(de_bruijn_stack, body, verbose) for body in node.children[2::3]]
 
         for _ in names:
             de_bruijn_stack.pop()
@@ -215,8 +224,8 @@ def get_token_sequence(de_bruijn_stack:List[str], node:Union[MyTree, MyToken])->
 
         value, type_ = node.children
 
-        result = get_token_sequence(de_bruijn_stack, value)
-        result += get_token_sequence(de_bruijn_stack, type_)
+        result = get_token_sequence(de_bruijn_stack, value, verbose)
+        result += get_token_sequence(de_bruijn_stack, type_, verbose)
 
         return result
 
@@ -225,15 +234,30 @@ def get_token_sequence(de_bruijn_stack:List[str], node:Union[MyTree, MyToken])->
         name, term, type_, body = node.children
 
         result = [("let", node.id)]
-        result += get_token_sequence(de_bruijn_stack, name)
-        result += get_token_sequence(de_bruijn_stack, term)
-        result += get_token_sequence(de_bruijn_stack, type_)
+        result += get_token_sequence(de_bruijn_stack, name, verbose)
+        result += get_token_sequence(de_bruijn_stack, term, verbose)
+        result += get_token_sequence(de_bruijn_stack, type_, verbose)
 
         de_bruijn_stack.append(result[1][0])
-        result += get_token_sequence(de_bruijn_stack, body)
+        result += get_token_sequence(de_bruijn_stack, body, verbose)
         de_bruijn_stack.pop()
 
         return result
+
+    elif verbose and node.data == "constructor_app":
+
+        assert len(node.children) >= 2
+
+        child_sequences = \
+            [get_token_sequence(de_bruijn_stack, child, verbose) for child in node.children]
+
+        res = child_sequences[0]
+        for argument_res in child_sequences[1:]:
+            res.append(("(", node.id))
+            res += argument_res
+            res.append((")", node.id))
+
+        return res
 
     else:
         assert node.data not in ["constructor_meta",
@@ -242,7 +266,7 @@ def get_token_sequence(de_bruijn_stack:List[str], node:Union[MyTree, MyToken])->
         assert len(node.children) > 0
         res = []
         for child in node.children:
-            res += get_token_sequence(de_bruijn_stack, child)
+            res += get_token_sequence(de_bruijn_stack, child, verbose)
 
         return res
 
@@ -280,7 +304,7 @@ class Stage1StatementCreator():
         tree = transform.transform(tree)
 
         tree, _ = add_prefix_preorder_id(tree)
-        seq = get_token_sequence([], tree)
+        seq = get_token_sequence([], tree, verbose=False)
 
         tokens:List[str] = [token for token, _ in seq]
         tokens_to_node:List[int] = [node_idx for _, node_idx in seq]
@@ -297,7 +321,7 @@ class Stage1StatementCreator():
         tree = transform.transform(tree)
 
         tree, _ = add_prefix_preorder_id(tree)
-        seq = get_token_sequence([], tree)
+        seq = get_token_sequence([], tree, verbose=True)
         tokens:List[str] = [token for token, _ in seq]
 
         return [self.get_stage1token(token) for token in tokens]
