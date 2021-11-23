@@ -112,11 +112,14 @@ def get_token_sequence(de_bruijn_stack:List[str], node:Union[Tree, Token])->List
         return []
     elif node.data == "constructor_dirpath":
         # is not in the general case because it can be empty
-        res = []
-        for child in node.children:
-            res += get_token_sequence(de_bruijn_stack, child)
 
-        return res
+        # we unite all of the path component in one token to limit the number of tokens
+        if node.children:
+            assert (all(isinstance(child, MyToken) for child in node.children))
+            return [("_".join(child.value for child in node.children), node.id)]
+        else:
+            return []
+
     elif node.data == "constructor_prod" or node.data == "constructor_lambda":
         assert len(node.children) == 3
         label, type_, term = node.children
@@ -273,12 +276,11 @@ class Stage1StatementCreator():
 
         tokens, nodes = zip(*seq)
         tokens = [Stage1Token(self.sub_tokenizer.tokenize(token)) for token in tokens]
-        tokens_to_node = dict(enumerate(nodes))
-
+        tokens_to_node = list(nodes)
         graph = get_dict_of_list(tree)
         return Stage1Statement(statement_name, tokens, graph, tokens_to_node)
 
-    def only_tokens(self, sexp)->List[str]:
+    def only_tokens(self, sexp)->List[Stage1Token]:
         tree = self.parser.parse(sexp)
 
         transform = HandleSpecialNodes() * TreeShortener() * TreePruner()

@@ -87,7 +87,6 @@ class Stage1Statement:
 class Stage2Statement:
     name :  str
     tokens : List[Stage2Token]
-    adjacency_matrix : Tensor
     distances : List[Distance]
     token_to_node : Dict[str,int]
 

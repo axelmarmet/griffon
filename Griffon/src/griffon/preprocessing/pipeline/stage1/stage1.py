@@ -17,7 +17,7 @@ from lark.exceptions import UnexpectedCharacters, ParseError
 
 from CoqGym.ASTactic.tac_grammar import CFG, TreeBuilder, NonterminalNode, TerminalNode
 from CoqGym.gallina import GallinaTermParser
-from CoqGym.utils import iter_proofs, SexpCache
+from CoqGym.utils import iter_proofs, SexpCache, iter_proofs_in_file
 
 from nltk.tokenize.regexp import RegexpTokenizer
 from griffon.preprocessing.pipeline.stage1.recreate_term import Stage1StatementCreator
@@ -32,35 +32,46 @@ import pickle
 from glob import glob
 
 
-def process_project(packed_args:Tuple[Namespace,str]):
+def init_process(args:Namespace):
+    global statement_creator
+    global sexp_cache
+    global grammar
+    global tree_builder
 
-    args, coq_project = packed_args
-    coq_project = coq_project.split(os.path.sep)[-1]
+    statement_creator = Stage1StatementCreator(GallinaTermParser(caching=False), RegexpTokenizer(r"[^\W_]+"))
+    sexp_cache = SexpCache(args.sexp_cache, readonly=True)
+    grammar = CFG(args.tactic_grammar, "tactic_expr")
+    tree_builder = TreeBuilder(grammar)
 
-    proof_indices_per_filename = defaultdict(int)
 
-    num_discarded = 0
-    total = 0
+def process_file(args:Namespace, proof_path:str):
+
+    directories = proof_path.split(os.path.sep)
 
     projs_split = json.load(open(args.splits_file, "r"))
+
+    coq_project_index = directories.index("data") + 1
+    coq_project = directories[coq_project_index]
+    filename = directories[-1].split(".")[0]
+
+    filename = "_".join(directories[coq_project_index+1 : -1] + [filename])
+
+    proof_index = 0
 
     if coq_project in projs_split["projs_train"]:
         split = "train"
     elif coq_project in projs_split["projs_valid"]:
         split = "valid"
-    else:
+    elif coq_project in projs_split["projs_test"]:
         split = "test"
+    else:
+        raise f"{coq_project} not in splits.json"
 
-    statement_creator = Stage1StatementCreator(GallinaTermParser(caching=False), RegexpTokenizer(r"[^\W_]+"))
-    sexp_cache = SexpCache(args.sexp_cache, readonly=True)
 
-    grammar = CFG(args.tactic_grammar, "tactic_expr")
-    tree_builder = TreeBuilder(grammar)
 
-    out_proj_dirpath = os.path.join(args.output, split, coq_project)
-    if not os.path.exists(out_proj_dirpath):
-            os.makedirs(out_proj_dirpath)
-
+    out_dirpath = os.path.join(args.output, split, coq_project, filename)
+    if not os.path.exists(out_dirpath):
+            os.makedirs(out_dirpath)
 
     def tactic2actions(tac_str):
         """my super function
@@ -105,14 +116,7 @@ def process_project(packed_args:Tuple[Namespace,str]):
         return local_context, goal_statement
 
     def process_proof(filename, proof_data):
-        nonlocal num_discarded
-        nonlocal total
-
-        filename = filename.split(os.path.sep)[-1].split(".")[0]
-
-        dirpath = os.path.join(out_proj_dirpath, filename)
-        if not os.path.exists(dirpath):
-                os.makedirs(dirpath)
+        nonlocal proof_index
 
         for step in proof_data["steps"]:
             # consider only tactics
@@ -151,7 +155,6 @@ def process_project(packed_args:Tuple[Namespace,str]):
                 continue
             for action in actions:
                 if type(action) == str:
-                    total += 1
                     # search in local context
                     res = find_in_list(local_context, lambda x : x.name == action)
                     lemma = None
@@ -169,21 +172,21 @@ def process_project(packed_args:Tuple[Namespace,str]):
                                 raise exc
 
                     if lemma is not None:
+                        # prune samples that are too big, a cutoff of 128 is sufficient to keep 98% of all samples
+                        if len(goal.tokens) > 128 or len(lemma) > 128:
+                            continue
+                        local_context = [hypothesis for hypothesis in local_context if len(hypothesis.tokens) <= 128]
+
                         sample = Stage1Sample(local_context, goal, lemma)
-                        out_filename = 'proof{:04d}.pickle'.format(proof_indices_per_filename[filename])
-                        proof_indices_per_filename[filename] += 1
-                        path = os.path.join(dirpath, out_filename)
+                        out_filename = 'proof{:04d}.pickle'.format(proof_index)
+                        proof_index += 1
+                        path = os.path.join(out_dirpath, out_filename)
                         assert not os.path.exists(path), f"{path} already exists"
                         pickle.dump(sample, open(path, 'wb'))
-                    else:
-                        #discard
-                        num_discarded += 1
 
-    iter_proofs(
-        os.path.join(args.data_root, coq_project), process_proof, include_synthetic=False, show_progress=False
+    iter_proofs_in_file(
+        proof_path, process_proof
     )
-
-    # print(f"\ndiscarded {num_discarded} out of {total}")
 
 if __name__ == "__main__":
 
@@ -209,9 +212,8 @@ if __name__ == "__main__":
     setattr(args, "tactic_grammar", os.path.join(args.coq_gym_root, "ASTactic", "tactics.ebnf"))
     setattr(args, "sexp_cache",     os.path.join(args.coq_gym_root, "sexp_cache"))
 
-    projects = glob(f"{args.data_root}/*")
-    with mp.Pool(args.threads) as pool:
-        for _ in tqdm(pool.imap(process_project, zip(itertools.repeat(args), projects)), total=len(projects)):
-            pass
+    proof_files = glob(f"{args.data_root}/**/*.json", recursive=True)
+    with mp.Pool(args.threads, initializer=init_process, initargs=[args]) as pool:
+        pool.starmap(process_file, zip(itertools.repeat(args), proof_files))
 
     print(f"Output saved to {args.output}")

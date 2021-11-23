@@ -24,21 +24,18 @@ class DistancesTransformer:
     def process_statement(self, statement:Stage1Statement)->Stage2Statement:
         G = nx.from_dict_of_lists(statement.ast, create_using=nx.Graph)
         adj = torch.tensor(nx.to_numpy_matrix(G))
-        graph_sample = {
-            'adj': adj,
-            'distances': {}
-        }
+        distances = []
+
         for distance_metric in self.distance_metrics:
             distance_matrix = distance_metric(adj)
             if self.distance_binning:
                 indices, bins = self.distance_binning(distance_matrix)
-                distance_matrix = (indices, bins, distance_metric.get_name())
-            graph_sample['distances'][distance_metric.get_name()] = distance_matrix
+                # we only care about the distances between actual tokens
+                indices = indices[statement.token_to_node][:,statement.token_to_node]
 
-        if self.distance_binning:
-            graph_sample['distances'] = list(graph_sample['distances'].values())
+                distances.append((indices, bins, distance_metric.get_name()))
 
-        return Stage2Statement(statement.name, statement.tokens, adj, graph_sample["distances"],
+        return Stage2Statement(statement.name, statement.tokens,distances,
                                statement.token_to_node)
 
 
