@@ -8,6 +8,7 @@ from argparse import Namespace
 
 import os
 import pickle
+from griffon.constants import SPECIAL_TOKENS
 
 from griffon.coq_dataclasses import Stage1Sample
 
@@ -36,7 +37,7 @@ def build_vocab(args:Namespace):
 
     proof_files = glob(train_root + "/**/*.pickle", recursive=True)
 
-    return build_vocab_from_iterator(subtoken_generator(proof_files), min_freq=3, specials=["<unk>", "<pad>"])
+    return build_vocab_from_iterator(subtoken_generator(proof_files), min_freq=3, specials=SPECIAL_TOKENS)
 
 
 if __name__ == "__main__":

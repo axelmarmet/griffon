@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 
-from griffon.constants import MAX_NUM_TOKEN, NUM_SUB_TOKENS, SUB_TOKEN_PAD, UNK_TOKEN
+from griffon.constants import MAX_NUM_TOKEN, NUM_SUB_TOKENS, PAD_TOKEN, UNK_TOKEN
 from griffon.coq_dataclasses import CTCoqLemma, CTCoqSample, CTCoqStatement, Stage1Token, Stage2Sample, Stage2Statement, Stage2Token
 from griffon.utils import pad_list, pad_mask
 
@@ -31,7 +31,7 @@ class CTCoqDataset(Dataset):
         self.vocab = pickle.load(open(vocab_path, "rb"))
 
         self.unk_id = self.vocab[UNK_TOKEN]
-        self.pad_id = self.vocab[SUB_TOKEN_PAD]
+        self.pad_id = self.vocab[PAD_TOKEN]
 
         self.num_sub_tokens = NUM_SUB_TOKENS
 

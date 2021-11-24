@@ -61,10 +61,10 @@ class Stage2Sample:
 
 @dataclass
 class CTCoqStatement:
-    tokens : Tensor
-    extended_vocabulary_ids : List[int]
-    pointer_pad_mask : Tensor
-    distances : List[Distance]
+    tokens                  : Tensor    # shape `number tokens x number_subtokens`
+    extended_vocabulary_ids : List[int] # len `number of non pad subtokens`
+    pointer_pad_mask        : Tensor    # shape `number tokens x number_subtokens`
+    distances               : List[Distance]
 
 @dataclass
 class CTCoqLemma:
@@ -115,5 +115,28 @@ class CTCoqSample:
 
 #     lemma                   : Tensor  # shape `number_tokens x max_subtokens`
 #     extended_vocabularies   : List[Dict[str,int]]
+
+
+@dataclass
+class CounTSample:
+    input_ids               : Tensor    # shape `number tokens x number_subtokens`
+    distance_indices        : Tensor    # shape `number distances x number tokens x number_tokens`
+    distance_bins           : Tensor    # shape `number distances x number bins`
+    target_ids              : Tensor    # shape `number selected tokens x number_subtokens`
+    target_mask             : Tensor    # shape `number tokens`
+
+@dataclass
+class CounTBatch:
+    input_ids               : Tensor    # shape `batch x max number tokens x number_subtokens`
+    distance_indices        : Tensor    # shape `batch x number distances x max number tokens x max number_tokens`
+    distance_bins           : Tensor    # shape `batch x number distances x number bins`
+    target_ids              : Tensor    # shape `batch x max number selected tokens x number_subtokens`
+    target_mask             : Tensor    # shape `batch x max number tokens`
+
+    # To only use actual info in all of the above tensors
+    input_padding_mask            : Tensor    # shape `batch x max_number_tokens`
+    target_padding_mask           : Tensor    # shape `batch x max number selected tokens`
+
+
 
 
