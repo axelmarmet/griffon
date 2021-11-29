@@ -1,5 +1,5 @@
 from collections import namedtuple
-from typing import Optional, List, Tuple
+from typing import Any, Dict, Optional, List, Tuple
 
 import torch
 import torch.nn.functional as F
@@ -30,6 +30,9 @@ def _get_activation_fn(activation):
     else:
         raise ValueError("unknown activation function")
 
+def _get_norm(config:Dict[str, Any]):
+    assert config["type"] == "layer_norm"
+    return nn.LayerNorm(config["d_model"], config["eps"])
 
 class CodeTransformerLayer(TransformerEncoderLayer):
 
@@ -76,10 +79,8 @@ class CodeTransformerLayer(TransformerEncoderLayer):
 
     def forward(self, src: torch.Tensor, src_mask: Optional[torch.Tensor] = None,
                 src_key_padding_mask: Optional[torch.Tensor] = None,
-                query_stream: Optional[torch.Tensor] = None,
-                attention_mask_query: Optional[torch.Tensor] = None,
                 relative_distances: Optional[Tuple[torch.Tensor,...]] = None,
-                asserts=True) -> TransformerLayerOutput:
+                asserts=True) -> torch.Tensor:
         """
         Forward step of the code transformer layer.
 
@@ -138,11 +139,6 @@ class CodeTransformerLayer(TransformerEncoderLayer):
                 assert relative_distances[1].shape[-2:] == (bsz, self.d_model)
             if src_mask is not None:
                 assert src_mask.shape == (seq_len, seq_len, bsz)
-            if query_stream is not None:
-                num_predict = query_stream.shape[0]
-                assert query_stream.shape == (num_predict, bsz, self.d_model)
-                if attention_mask_query is not None:
-                    assert attention_mask_query.shape == (seq_len, seq_len, bsz)
 
         k_content_stream = F.linear(content_stream_cat, self.self_attn.get_k_proj_weight(),
                                     self.self_attn.get_k_proj_bias())
@@ -162,11 +158,9 @@ class CodeTransformerLayer(TransformerEncoderLayer):
         # core attention ops for content stream
         att_out_content = self.self_attn.forward(
             q_content_stream, k_content_stream, v_content_stream, position_keys=k_position_encoding,
-            attn_mask=src_mask, distance_indices=dist_ixs, need_weights=need_weights,
+            attn_mask=src_mask, distance_indices=dist_ixs,
             key_padding_mask=src_key_padding_mask,
         )
-        if need_weights:
-            att_out_content, att_probs_content = att_out_content
 
         att_out_content = self.post_attention(src, att_out_content) # type: ignore
 
@@ -276,7 +270,7 @@ class RelativeMultiheadAttention(MultiheadAttention):
         return x
 
     def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor,
-                key_padding_mask: Optional[torch.Tensor] = None, need_weights: Optional[bool] = True,
+                key_padding_mask: Optional[torch.Tensor] = None, need_weights: Optional[bool] = False,
                 attn_mask: Optional[torch.Tensor] = None, position_keys: Optional[torch.Tensor] = None,
                 distance_indices: Optional[torch.Tensor] = None,
                 ):
@@ -350,9 +344,9 @@ class RelativeMultiheadAttention(MultiheadAttention):
             attn_mask = (attn_mask > 0).to(attn_mask.dtype)
 
             if attn_mask.dtype == torch.float16:
-                attention_raw = attention_raw - 65500 * torch.einsum('ijbn->bnij', attn_mask.unsqueeze(-1))
+                attention_raw = attention_raw - 65500 * attn_mask.unsqueeze(-1).permute(2,3,0,1)
             else:
-                attention_raw = attention_raw - 1e30 * torch.einsum('ijbn->bnij', attn_mask.unsqueeze(-1))
+                attention_raw = attention_raw - 1e30 * attn_mask.unsqueeze(-1).permute(2,3,0,1)
 
         attention_prob = F.softmax(attention_raw, dim=3)
         # attention_prob = self.dropout(attention_prob) # dropout here can lead to attention scores > 1!
@@ -449,36 +443,17 @@ class RelativeMultiheadAttention(MultiheadAttention):
 class CodeTransformer(TransformerEncoder):
 
     def __init__(self, config: Dict[str,Any]):
-        if not isinstance(config.encoder_layer, CodeTransformerLayer):
-            encoder_layer = CodeTransformerLayer(**config.encoder_layer)
-        else:
-            encoder_layer = config.encoder_layer
-        super(CodeTransformer, self).__init__(encoder_layer, config.num_layers, config.norm)
+        encoder_layer = CodeTransformerLayer(**config["encoder_layer"])
+        norm = _get_norm(config["norm"])
+        super(CodeTransformer, self).__init__(encoder_layer, config["num_layers"], norm)
 
-        self.use_token_distances = encoder_layer.self_attn.use_token_distances
         self.d_model = encoder_layer.d_model
-        self.query_stream_emb = nn.Parameter(torch.FloatTensor(1, 1, self.d_model))
+        self.query_stream_emb = Parameter(torch.FloatTensor(1, 1, self.d_model))
         self.dropout = nn.Dropout(p=encoder_layer.dropout.p)
 
-        if 'positional_encoding' not in config or config.positional_encoding is None:
-            self.positional_embedding = TransformerPositionalEncoding(d_model=self.d_model)
-        else:
-            encoding_type = None
-            if "positional_encoding_type" in config.positional_encoding:
-                encoding_type = config.positional_encoding['positional_encoding_type']
-
-            if encoding_type is None or encoding_type == "Transformer":
-                self.positional_embedding = TransformerPositionalEncoding(**config.positional_encoding,
-                                                                          d_model=self.d_model)
-            else:
-                raise NotImplementedError(f"Unknown positional encoding: {self.positional_encoding_type}")
+        self.positional_embedding = TransformerPositionalEncoding(d_model=self.d_model)
 
         self._reset_parameters()
-
-    @staticmethod
-    def from_old(encoder_layer: CodeTransformerLayer, num_layers, norm=None, pos_emb_base_pow=10000):
-        return CodeTransformer(CodeTransformerCoreConfig(encoder_layer, num_layers, norm=norm,
-                                                         positional_encoding=dict(pos_emb_base_pow=pos_emb_base_pow)))
 
     def _reset_parameters(self):
         r"""Initiate parameters in the transformer model."""
@@ -490,11 +465,7 @@ class CodeTransformer(TransformerEncoder):
 
     def forward(self, src: torch.Tensor, src_mask: Optional[torch.Tensor] = None,
                 src_key_padding_mask: Optional[torch.Tensor] = None,
-                relative_distances: Optional[List[Tuple[torch.Tensor]]] = None,
-                edge_embeddings: Optional[Tuple[torch.Tensor]] = None,
-                target_mapping: Optional[torch.Tensor] = None,
-                need_weights: Optional[bool] = False,
-                need_all_embeddings: Optional[bool] = False) -> TransformerOutput:
+                relative_distances: Optional[Tuple[torch.Tensor, ...]] = None) -> torch.Tensor:
         """
         Forward pass of the Code Transformer.
 
@@ -529,6 +500,9 @@ class CodeTransformer(TransformerEncoder):
                 * Query stream embeddings (if target_mapping is provided, else None),
                   dim [batch_size, seq_len, seq_len, num_heads]
         """
+        B,S,D = src.shape
+        N_BINS = 32
+
         if src_key_padding_mask is not None:
             assert (src_key_padding_mask[:, 0] == 0).all(), "First token padded; check padding mask!"
         content_stream_out = self.dropout(src.transpose(0, 1).contiguous())
@@ -537,15 +511,7 @@ class CodeTransformer(TransformerEncoder):
         src_key_padding_mask = (src_key_padding_mask.transpose(0, 1).contiguous()
                                 if src_key_padding_mask is not None else None)
 
-        target_mapping = target_mapping.permute(1, 2, 0).contiguous() if target_mapping is not None else None
-
         seq_len, bsz = content_stream_out.shape[0], content_stream_out.shape[1]
-
-        if edge_embeddings is not None:
-            edge_indices, edge_embeddings = edge_embeddings
-        else:
-            edge_embeddings = None
-            edge_indices = None
 
         # Query stream attention mask: tokens cannot see themselves (as reflected by the permutation mask)
         if src_mask is not None:
@@ -558,55 +524,16 @@ class CodeTransformer(TransformerEncoder):
             attn_mask_q = None
             attn_mask_h = None
 
-        encoded_token_distances = None
-        if self.use_token_distances:
-            possible_distances = torch.arange(seq_len, -seq_len, -1.0).unsqueeze(1).to(next(self.parameters()).device)
-            encoded_token_distances = self.positional_embedding(possible_distances)
+        if relative_distances is not None:
+            pos_emb = self.positional_embedding(relative_distances[1].reshape(-1, N_BINS)).\
+                reshape(-1,N_BINS, B, self.d_model)
+            pos_emb = self.dropout(pos_emb)
+            relative_distances = relative_distances[0], pos_emb
 
-        if relative_distances is not None and len(relative_distances) > 0:
-            encoded_distances = []
-            for distance_indices, possible_distances in relative_distances:
-                pos_emb = self.positional_embedding(possible_distances)
-                pos_emb = self.dropout(pos_emb)
-                encoded_distances.append((distance_indices, pos_emb))
-            distance_indices = torch.stack([x[0] for x in encoded_distances])
-            distance_encodings = torch.stack([x[1] for x in encoded_distances])
-            relative_distances = (distance_indices, distance_encodings)
-        else:
-            relative_distances = None
-
-        if target_mapping is not None:
-            query_stream_out = self.query_stream_emb.expand(target_mapping.shape[0], bsz, -1)
-            query_stream_out = self.dropout(query_stream_out)
-        else:
-            query_stream_out = None
-
-        attentions = []
-        embeddings = []
-        if need_all_embeddings:
-            embeddings.append((content_stream_out, query_stream_out))
         for mod in self.layers:
-            outputs = mod(content_stream_out, src_mask=attn_mask_h, attention_mask_query=attn_mask_q,
+            assert isinstance(mod, CodeTransformerLayer)
+            content_stream_out = mod.forward(content_stream_out, src_mask=attn_mask_h,
                           src_key_padding_mask=src_key_padding_mask,
-                          relative_distances=relative_distances, token_distances=encoded_token_distances,
-                          target_mapping=target_mapping,
-                          query_stream=query_stream_out, need_weights=need_weights,
-                          edge_embeddings=edge_embeddings, edge_indices=edge_indices
-                          )
-            content_stream_out = outputs.content_stream_out
-            query_stream_out = outputs.query_stream_out
-            # content_stream_out, query_stream_out = outputs[:2]
-            if need_weights:
-                attentions.append(outputs[2])
-            if need_all_embeddings:
-                embeddings.append((content_stream_out, query_stream_out))
+                          relative_distances=relative_distances)
 
-        output = self.dropout(query_stream_out if query_stream_out is not None else content_stream_out)
-
-        if not need_weights:
-            attentions = None
-        # Prepare outputs, we transpose back here to shape [bsz, len, hidden_dim] (cf. beginning of forward() method)
-        outputs = TransformerOutput(out_emb=output.permute(1, 0, 2).contiguous(),
-                                    attentions=attentions, all_emb=embeddings)
-
-        return outputs
+        return content_stream_out

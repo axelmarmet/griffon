@@ -122,21 +122,34 @@ class CounTSample:
     input_ids               : Tensor    # shape `number tokens x number_subtokens`
     distance_indices        : Tensor    # shape `number distances x number tokens x number_tokens`
     distance_bins           : Tensor    # shape `number distances x number bins`
-    target_ids              : Tensor    # shape `number selected tokens x number_subtokens`
-    target_mask             : Tensor    # shape `number tokens`
+    target_ids              : Tensor    # shape `number tokens x number_subtokens`
 
 @dataclass
-class CounTBatch:
+class CounTInput:
     input_ids               : Tensor    # shape `batch x max number tokens x number_subtokens`
     distance_indices        : Tensor    # shape `batch x number distances x max number tokens x max number_tokens`
     distance_bins           : Tensor    # shape `batch x number distances x number bins`
-    target_ids              : Tensor    # shape `batch x max number selected tokens x number_subtokens`
-    target_mask             : Tensor    # shape `batch x max number tokens`
-
     # To only use actual info in all of the above tensors
     input_padding_mask            : Tensor    # shape `batch x max_number_tokens`
+
+    def to(self, *args):
+        self.input_ids = self.input_ids.to(*args)
+        self.distance_indices = self.distance_indices.to(*args)
+        self.distance_bins    = self.distance_bins.to(*args)
+        self.input_padding_mask = self.input_padding_mask.to(*args)
+
+@dataclass
+class CounTTarget:
+    target_ids              : Tensor    # shape `batch x max number selected tokens x number_subtokens`
+    target_mask             : Tensor    # shape `batch x max number tokens`
+    # To only use actual info in all of the above tensors
     target_padding_mask           : Tensor    # shape `batch x max number selected tokens`
 
+    def to(self, *args):
+        self.target_ids = self.target_ids.to(*args)
+        self.target_mask = self.target_mask.to(*args)
+        self.target_padding_mask = self.target_padding_mask.to(*args)
 
-
-
+class CounTBatch(NamedTuple):
+    input: CounTInput
+    target: Tensor # shape `batch x max_number_tokens x num_subtokens`

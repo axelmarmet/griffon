@@ -1,12 +1,29 @@
 import os
 
+import torch.distributed as dist
+
 import json
+import random
+import numpy as np
 import torch
 
 from typing import Callable, List, Optional, TypeVar
 from torch import Tensor
 
 from CoqGym.utils import update_env
+
+# necessary functions for distributed training
+
+def setup(rank, world_size):
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '12355'
+
+    # initialize the process group
+    dist.init_process_group("nccl", rank=rank, world_size=world_size)
+
+def cleanup():
+    dist.destroy_process_group()
+
 
 T = TypeVar('T')
 def find_in_list(l:List[T], f:Callable[[T], bool])->Optional[T]:
@@ -47,3 +64,11 @@ def iter_proofs_in_file(filename, callback:Callable):
         del proof_data["env_delta"]
         proof_data["env"] = env
         callback(filename, proof_data)
+
+def set_seed(seed=0):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+
