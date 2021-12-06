@@ -1,5 +1,6 @@
 import argparse
 import os
+from numpy import sqrt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -12,10 +13,12 @@ from torch import Tensor
 import json
 
 from torchtext.vocab import Vocab
+import wandb
 from griffon.dataset.count_dataset import CounTDataset
 from griffon.models.encoder.code_transformer import CodeTransformer
 
 from griffon.coq_dataclasses import CounTInput
+from griffon.models.encoder.standard_transformer import Seq2SeqEncoder
 from griffon.models.encoder.train import train
 from griffon.utils import cleanup, set_seed, setup
 
@@ -42,18 +45,27 @@ class CounT(nn.Module):
     def __init__(self, vocab:Vocab, config:Dict[str,Any]):
         super(CounT, self).__init__()
 
-        self.embedding_dim = config["embedding_dim"]
+        self.subtoken_embedding_dim = config["subtoken_embedding_dim"]
         self.num_subtokens = config["num_subtokens"]
+        self.d_model = config["token_embedding_dim"]
 
         self.vocab = vocab
 
-        self.embedding = nn.Embedding(len(vocab), self.embedding_dim)
+        self.scale_token_embeddings = config["scale_token_embeddings"]
 
-        self.token_encoder = nn.Linear(self.num_subtokens * self.embedding_dim, self.embedding_dim)
-        self.token_decoder = nn.Linear(self.embedding_dim, self.num_subtokens * self.embedding_dim)
+        self.embedding = nn.Embedding(len(vocab), self.subtoken_embedding_dim)
+
+        self.token_encoder = nn.Linear(self.num_subtokens * self.subtoken_embedding_dim, self.d_model)
+        self.token_decoder = nn.Linear(self.d_model, self.num_subtokens * self.subtoken_embedding_dim)
         self.activation_fn = _get_activation_fn(config["activation_fn"])
 
-        self.ct_encoder = CodeTransformer(config["code_transformer"])
+        transformer_config = config["transformer"]
+        assert transformer_config["type"] in ["code", "standard"]
+        if transformer_config["type"] == "code":
+            self.encoder = CodeTransformer(transformer_config)
+        else:
+            self.encoder = Seq2SeqEncoder(transformer_config)
+
 
     def forward(self, inp:CounTInput, predict:bool=False)->Tensor:
 
@@ -63,15 +75,29 @@ class CounT(nn.Module):
         token_embeddings = self.token_encoder(subtokens_embeddings)
         token_embeddings = self.activation_fn(token_embeddings)
 
-        relative_distances = (inp.distance_indices.transpose(0,1), \
-                              inp.distance_bins.permute(1,2,0))
+        if self.scale_token_embeddings:
+            token_embeddings *= sqrt(self.d_model)
 
-        token_embeddings = self.ct_encoder.forward(
-            token_embeddings,
-            src_key_padding_mask=inp.input_padding_mask,
-            relative_distances=relative_distances)
+        relative_distances = inp.distance_indices, inp.distance_bins
 
-        subtokens_embeddings = self.token_decoder(token_embeddings).reshape(B, S, self.num_subtokens, self.embedding_dim)
+        if isinstance(self.encoder, Seq2SeqEncoder):
+            token_embeddings = self.encoder.forward(
+                token_embeddings,
+                src_padding_mask=inp.input_padding_mask
+            )
+        else:
+            assert isinstance(self.encoder, CodeTransformer)
+            token_embeddings = self.encoder.forward(
+                token_embeddings,
+                src_key_padding_mask=inp.input_padding_mask,
+                relative_distances=relative_distances)
+            token_embeddings = token_embeddings.transpose(1,0)
+
+        assert token_embeddings.shape[0] == B
+        assert token_embeddings.shape[1] == S
+        assert token_embeddings.shape[2] == self.d_model
+
+        subtokens_embeddings = self.token_decoder(token_embeddings).reshape(B, S, self.num_subtokens, self.subtoken_embedding_dim)
         subtokens_embeddings = self.activation_fn(subtokens_embeddings)
 
         if predict:
@@ -115,7 +141,7 @@ def run(args:argparse.Namespace, rank:int, world_size:int):
     best_model = train(model, datasets, config, args)
 
     if args.is_main:
-        torch.save(best_model, "my_best_model")
+        torch.save(best_model, "models/my_best_model")
 
     if args.distributed:
         cleanup()
@@ -140,7 +166,8 @@ if __name__ == "__main__":
     arg_parser.add_argument('--distributed', dest='distributed', action='store_true', help="""
         use distributed training, if set then device must not be specified
     """)
-    arg_parser.set_defaults(feature=True)
+    arg_parser.add_argument('--use_wandb', dest='use_wandb', action='store_true')
+
     args = arg_parser.parse_args()
 
     assert not (args.distributed and args.device != "cpu"), "flag --distributed cannot be set at the same time that a device is given"

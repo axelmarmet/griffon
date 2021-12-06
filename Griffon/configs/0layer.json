@@ -2,18 +2,23 @@
     "seed" : 0,
 
     "training":{
-        "warmup_steps" : 2000,
-        "lr_mult"      : 0.1,
-        "epochs"       : 30,
-        "batch_size"   : 128
+        "warmup_steps"         : 4000,
+        "lr_mult"              : 0.05,
+        "epochs"               : 30,
+        "batch_size"           : 128,
+        "simulated_batch_size" : 512,
+        "ignore_pad_idx"       : true
     },
 
     "architecture":{
-        "embedding_dim":512,
+        "subtoken_embedding_dim":512,
+        "token_embedding_dim":512,
         "num_subtokens":5,
+        "scale_token_embeddings":false,
         "activation_fn":"gelu",
-        "code_transformer":{
-            "num_layers":2,
+        "transformer":{
+            "type":"standard",
+            "num_layers":0,
             "encoder_layer":{
                 "d_model":512,
                 "nhead":8,

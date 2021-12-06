@@ -9,6 +9,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 from typing import Dict, Any
+from torch import Tensor
 
 from torch.utils.data.dataloader import DataLoader
 from torch.utils.data import DistributedSampler
@@ -16,30 +17,41 @@ from griffon.constants import TGT_IGNORE_INDEX
 from griffon.coq_dataclasses import CounTBatch
 
 from griffon.dataset.count_dataset import CounTDataset
+from griffon.metrics import top_k_metric
 from griffon.models.scheduled_optimizer import ScheduledOptim
 
 from tqdm import tqdm
 
 import numpy as np
-from sklearn.metrics import top_k_accuracy_score
 
 import wandb
 
 def train(model, datasets:Dict[str, CounTDataset], config:Dict[str,Any], args:Namespace):
 
     should_log = not (args.distributed and (not args.is_main))
-    # if should_log:
-    #     wandb.init(
-    #         project="griffon",
-    #         entity="axelmarmet",
-    #         config=config
-    #     )
+    if should_log and args.use_wandb:
+        wandb.init(
+            project="griffon",
+            entity="axelmarmet",
+            config=config
+        )
+        wandb.watch(model, log='all')
 
     training_config = config["training"]
 
+    assert training_config["simulated_batch_size"] % training_config["batch_size"] == 0
+    steps_before_opt = training_config["simulated_batch_size"] // training_config["batch_size"]
+
     # get the dataloaders
     train_split, val_split, test_split = datasets["train"], datasets["valid"], datasets["test"]
-    sampler = DistributedSampler(train_split) if args.distributed else None
+
+    train_sampler = DistributedSampler(train_split) if args.distributed else None
+    test_sampler = DistributedSampler(test_split, shuffle=False) if args.distributed else None
+    val_sampler = DistributedSampler(val_split, shuffle=False) if args.distributed else None
+
+    pad_idx = train_split.pad_id
+    ignore_pad_idx = training_config["ignore_pad_idx"]
+
     dataloaders:Dict[str, DataLoader[CounTBatch]] = {}
 
     # we divide the batch size by the world_size so that the total
@@ -49,15 +61,15 @@ def train(model, datasets:Dict[str, CounTDataset], config:Dict[str,Any], args:Na
         f"number of gpus ({args.world_size})"
     batch_size = training_config["batch_size"] // args.world_size
 
-    dataloaders['train'] = train_split.to_dataloader(batch_size, sampler)
-    dataloaders['val'] =   val_split.to_dataloader(batch_size)
-    dataloaders['test'] =  test_split.to_dataloader(batch_size)
+    dataloaders['train'] = train_split.to_dataloader(batch_size, train_sampler)
+    dataloaders['val'] =   val_split.to_dataloader(batch_size, val_sampler)
+    dataloaders['test'] =  test_split.to_dataloader(batch_size, test_sampler)
 
     # get the optimizer
     opt = ScheduledOptim(
         optim.Adam(model.parameters()),
         training_config["lr_mult"],
-        config["architecture"]["embedding_dim"],
+        config["architecture"]["token_embedding_dim"],
         training_config["warmup_steps"]
     )
 
@@ -72,34 +84,42 @@ def train(model, datasets:Dict[str, CounTDataset], config:Dict[str,Any], args:Na
 
         if args.distributed:
             # necessary for shuffling to work with the distributed sampler
-            sampler.set_epoch(epoch) # type:ignore
+            train_sampler.set_epoch(epoch) # type:ignore
             dist.barrier()
 
         total_loss = torch.zeros((1), device=args.device)
         model.train()
 
-        for inp, tgt_ids in tqdm(dataloaders['train'], disable=not should_log):
+        for i, (inp, tgt_ids) in enumerate(tqdm(dataloaders['train'], disable=not should_log)):
             inp.to(args.device)
             tgt_ids = tgt_ids.to(args.device)
 
-            opt.zero_grad()
+            if ignore_pad_idx:
+                tgt_ids[tgt_ids == pad_idx] = TGT_IGNORE_INDEX
+
+
             pred = model.forward(inp, predict=True)
 
             len_vocab = pred.shape[-1]
 
-            log_probs = F.log_softmax(pred).view(-1, len_vocab)
-            loss = criterion(log_probs, tgt_ids.view(-1))
+            log_probs = F.log_softmax(pred, -1).view(-1, len_vocab)
+            loss = criterion(log_probs, tgt_ids.view(-1)) / steps_before_opt
 
             total_loss += loss
             loss.backward()
-            opt.step_and_update_lr()
+
+            if i % steps_before_opt == steps_before_opt-1:
+                opt.step_and_update_lr()
+                opt.zero_grad()
 
         # get mean loss and not sum of mean batch loss
         total_loss /= epochs
-        dist.reduce(total_loss, 0, dist.ReduceOp.SUM)
+        if args.distributed:
+            dist.reduce(total_loss, 0, dist.ReduceOp.SUM)
         total_loss /= args.world_size
 
-        accs = test(dataloaders, model, args.device, verbose=should_log)
+        accs = test(dataloaders, model, args, verbose=should_log, ignore_pad_idx=ignore_pad_idx, pad_idx=pad_idx)
+
         if val_max < accs['val'] and should_log:
             val_max = accs['val']
             best_model = copy.deepcopy(model)
@@ -107,19 +127,28 @@ def train(model, datasets:Dict[str, CounTDataset], config:Dict[str,Any], args:Na
         if should_log:
             print("Epoch {}: Validation: {:.4f}. Test: {:.4f}, Loss: {:.4f}".format(
                 epoch + 1, accs['val'], accs['test'], total_loss.item()))
-            # wandb.log({
-            #     "training loss": total_loss,
-            #     "validation accuracy": accs['val'],
-            #     "test accuracy": accs['test']
-            # })
 
-    final_accs = test(dataloaders, best_model, args.device, should_log)
+            path = os.path.join("models", f"model_{epoch+1}.pkl")
+            torch.save(model.state_dict(), path)
+
+            if args.use_wandb:
+                wandb.log({
+                    "training loss": total_loss,
+                    "validation top 3 accuracy": accs['val'],
+                    "test top 3 accuracy": accs['test']
+                })
+
+    final_accs = test(dataloaders, best_model, args, should_log, ignore_pad_idx, pad_idx)
     if should_log:
         print("FINAL MODEL: Validation: {:.4f}. Test: {:.4f}".format(final_accs['val'], final_accs['test']))
 
     return best_model
 
-def test(dataloaders, model, device, verbose):
+def test(dataloaders, model, args:Namespace, verbose:bool, ignore_pad_idx:bool=False, pad_idx = -1):
+
+    assert not (ignore_pad_idx and pad_idx == -1), \
+        "give a correct value to pad_idx if you want to ignore it"
+
     model.eval()
 
     accs = {}
@@ -127,17 +156,25 @@ def test(dataloaders, model, device, verbose):
         if dataset == "train":
             continue
 
-        labels = []
-        predictions = []
+        results = []
         for inp, tgt_ids in tqdm(dataloaders[dataset], disable=not verbose):
 
+            inp.to(args.device)
+            tgt_ids = tgt_ids.to(args.device)
 
-            inp.to(device)
-            pred = model.forward(inp, predict=True)
-            predictions.append(pred.round().cpu().detach().numpy())
-            labels.append(tgt_ids.cpu().numpy())
+            pred:Tensor = model.forward(inp, predict=True).detach()
+            vocab_len = pred.shape[-1]
 
-        predictions = np.concatenate(predictions)
-        labels = np.concatenate(labels)
-        accs[dataset] = top_k_accuracy_score(labels, predictions, k=3)
+            res = top_k_metric(pred.reshape(-1, vocab_len), tgt_ids.reshape(-1), k=3)
+
+            results.append(res)
+
+        accs[dataset] = results = torch.cat(results).mean()
+
+    if args.distributed:
+        for value in accs.values():
+            dist.reduce(value, 0, dist.ReduceOp.SUM)
+
+    accs = {key:val.item() / args.world_size for key, val in accs.items()}
+
     return accs
