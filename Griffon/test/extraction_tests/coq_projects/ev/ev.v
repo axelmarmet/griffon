@@ -5,6 +5,16 @@ Proof.
     auto.
 Qed.
 
+Theorem to_remove :
+    forall n : nat, 1 + n = Coq.Init.Datatypes.nat n.
+Proof.
+    auto.
+Qed.
+
+Check to_remove.
+
+Search (forall n : Coq.Init.Datatypes.nat, 1 + n = (Coq.Init.Datatypes.nat) n).
+
 Theorem commut :
     forall a b : nat, a + b = b + a.
 Proof.
