@@ -1,0 +1,9 @@
+{
+    "projs_train": [
+        "semantic_unit_tests"
+    ],
+    "projs_test": [
+    ],
+    "projs_valid": [
+    ]
+}

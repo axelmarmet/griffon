@@ -1,4 +1,6 @@
 .vscode
 test
 data
+models
 notebooks
+semantic_tests
