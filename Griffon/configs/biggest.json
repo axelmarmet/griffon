@@ -5,7 +5,7 @@
         "warmup_steps"         : 4000,
         "lr_mult"              : 0.05,
         "epochs"               : 30,
-        "batch_size"           : 32,
+        "batch_size"           : 256,
         "simulated_batch_size" : 512,
         "ignore_pad_idx"       : true
     },
@@ -18,7 +18,7 @@
         "activation_fn":"gelu",
         "transformer":{
             "type":"code",
-            "num_layers":4,
+            "num_layers":6,
             "encoder_layer":{
                 "d_model":2048,
                 "nhead":8,
