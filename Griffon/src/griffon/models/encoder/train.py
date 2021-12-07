@@ -112,6 +112,9 @@ def train(model, datasets:Dict[str, CounTDataset], config:Dict[str,Any], args:Na
                 opt.step_and_update_lr()
                 opt.zero_grad()
 
+            if i == 10:
+                break
+
         # get mean loss and not sum of mean batch loss
         total_loss /= epochs
         if args.distributed:
@@ -125,8 +128,8 @@ def train(model, datasets:Dict[str, CounTDataset], config:Dict[str,Any], args:Na
             best_model = copy.deepcopy(model)
 
         if should_log:
-            print("Epoch {}: Validation: {:.4f}. Test: {:.4f}, Loss: {:.4f}".format(
-                epoch + 1, accs['val'], accs['test'], total_loss.item()))
+            print("Epoch {}: Validation: {:.4f}, Loss: {:.4f}".format(
+                epoch + 1, accs['val'], total_loss.item()))
 
             path = os.path.join("models", f"model_{epoch+1}.pkl")
             torch.save(model.state_dict(), path)
@@ -135,12 +138,11 @@ def train(model, datasets:Dict[str, CounTDataset], config:Dict[str,Any], args:Na
                 wandb.log({
                     "training loss": total_loss,
                     "validation top 3 accuracy": accs['val'],
-                    "test top 3 accuracy": accs['test']
                 })
 
     final_accs = test(dataloaders, best_model, args, should_log, ignore_pad_idx, pad_idx)
     if should_log:
-        print("FINAL MODEL: Validation: {:.4f}. Test: {:.4f}".format(final_accs['val'], final_accs['test']))
+        print("FINAL MODEL: Validation: {:.4f}".format(final_accs['val']))
 
     return best_model
 
@@ -153,11 +155,11 @@ def test(dataloaders, model, args:Namespace, verbose:bool, ignore_pad_idx:bool=F
 
     accs = {}
     for dataset in dataloaders:
-        if dataset == "train":
+        if dataset == "train" or dataset == "test":
             continue
 
         results = []
-        for inp, tgt_ids in tqdm(dataloaders[dataset], disable=not verbose):
+        for i, (inp, tgt_ids) in enumerate(tqdm(dataloaders[dataset], disable=not verbose)):
 
             inp.to(args.device)
             tgt_ids = tgt_ids.to(args.device)
@@ -168,6 +170,9 @@ def test(dataloaders, model, args:Namespace, verbose:bool, ignore_pad_idx:bool=F
             res = top_k_metric(pred.reshape(-1, vocab_len), tgt_ids.reshape(-1), k=3)
 
             results.append(res)
+
+            if i == 100:
+                break
 
         accs[dataset] = results = torch.cat(results).mean()
 
