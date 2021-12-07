@@ -1,0 +1,5 @@
+[default]
+entity = axelmarmet
+project = griffon
+base_url = https://api.wandb.ai
+

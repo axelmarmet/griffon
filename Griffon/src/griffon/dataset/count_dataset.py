@@ -55,7 +55,6 @@ class CounTDataset(Dataset[CounTBatch]):
         # the batching digm
 
         max_input_length = max([sample.input_ids.shape[0] for sample in samples])
-        max_target_length = max([sample.target_ids.shape[0] for sample in samples])
 
         # only tensor where no padding is needed
         distance_bins_list = [sample.distance_bins for sample in samples]

@@ -9,6 +9,8 @@ from torch.nn.init import xavier_uniform_, xavier_normal_, constant_
 from torch.nn.parameter import Parameter
 
 from griffon.models.encoder.distance_embeddings import TransformerPositionalEncoding
+from griffon.models.utils import get_norm
+
 
 TransformerOutput = namedtuple("TransformerOutput",
                                ['out_emb', 'attentions', 'all_emb'])
@@ -29,10 +31,6 @@ def _get_activation_fn(activation):
         return F.sigmoid
     else:
         raise ValueError("unknown activation function")
-
-def _get_norm(config:Dict[str, Any]):
-    assert config["type"] == "layer_norm"
-    return nn.LayerNorm(config["d_model"], config["eps"])
 
 class CodeTransformerLayer(TransformerEncoderLayer):
 
@@ -214,7 +212,7 @@ class RelativeMultiheadAttention(MultiheadAttention):
         self.r_proj_bias = None
         self.pos_pos_bias = None
         self.position_content_bias = None
-        self.position_segment_bias = None
+        #self.position_segment_bias = None
         super(RelativeMultiheadAttention, self).__init__(embed_dim, num_heads, dropout, bias, add_bias_kv,
                                                          add_zero_attn, kdim, vdim)
         if not self._qkv_same_embed_dim:
@@ -248,7 +246,7 @@ class RelativeMultiheadAttention(MultiheadAttention):
         self.pos_pos_bias = Parameter(torch.FloatTensor(self.num_relative_distances, self.num_heads * self.head_dim))
         self.register_parameter(f'pos_pos_bias', self.pos_pos_bias)
 
-        self.position_segment_bias = Parameter(torch.FloatTensor(self.num_heads, self.head_dim))
+        #self.position_segment_bias = Parameter(torch.FloatTensor(self.num_heads, self.head_dim))
         self.position_content_bias = Parameter(torch.FloatTensor(self.num_heads, self.head_dim))
 
         self._reset_parameters()
@@ -434,7 +432,7 @@ class RelativeMultiheadAttention(MultiheadAttention):
         if self.r_proj_bias is not None:
             constant_(self.r_proj_bias, 0.)
 
-        xavier_normal_(self.position_segment_bias) if self.position_segment_bias is not None else None
+        #xavier_normal_(self.position_segment_bias) if self.position_segment_bias is not None else None
         xavier_normal_(self.position_content_bias) if self.position_content_bias is not None else None
         if self.pos_pos_bias is not None:
             xavier_normal_(self.pos_pos_bias)
@@ -444,11 +442,9 @@ class CodeTransformer(TransformerEncoder):
 
     def __init__(self, config: Dict[str,Any]):
         encoder_layer = CodeTransformerLayer(**config["encoder_layer"])
-        norm = _get_norm(config["norm"])
-        super(CodeTransformer, self).__init__(encoder_layer, config["num_layers"], norm)
+        super(CodeTransformer, self).__init__(encoder_layer, config["num_layers"], get_norm(config["norm"]))
 
         self.d_model = encoder_layer.d_model
-        self.query_stream_emb = Parameter(torch.FloatTensor(1, 1, self.d_model))
         self.dropout = nn.Dropout(p=encoder_layer.dropout.p)
 
         self.positional_embedding = TransformerPositionalEncoding(d_model=self.d_model)
@@ -501,7 +497,13 @@ class CodeTransformer(TransformerEncoder):
                   dim [batch_size, seq_len, seq_len, num_heads]
         """
         B,S,D = src.shape
-        N_BINS = 32
+        B_, Dist, S_, S__ = relative_distances[0].shape
+        B__, Dist_, N_BINS = relative_distances[1].shape
+
+        assert B == B_ and B_ == B__
+        assert S == S_ and S_ == S__
+        assert Dist == Dist_
+        assert N_BINS == 32
 
         if src_key_padding_mask is not None:
             assert (src_key_padding_mask[:, 0] == 0).all(), "First token padded; check padding mask!"
@@ -526,14 +528,24 @@ class CodeTransformer(TransformerEncoder):
 
         if relative_distances is not None:
             pos_emb = self.positional_embedding(relative_distances[1].reshape(-1, N_BINS)).\
-                reshape(-1,N_BINS, B, self.d_model)
+                reshape(B, Dist_, N_BINS, self.d_model)
             pos_emb = self.dropout(pos_emb)
-            relative_distances = relative_distances[0], pos_emb
+
+            # we massage the tensors into the shape expected by the layers
+            # indices must go from Batch x Dist x Seq x Seq to Dist x Batch x Seq x Seq
+            dist_indices = relative_distances[0].transpose(1,0)
+            # embeddings must go from Batch x Dist x Bins x E to Dist x Bins x Batch x E
+            dist_embeddings = pos_emb.permute(1,2,0,3)
+
+            relative_distances = dist_indices, dist_embeddings
+
 
         for mod in self.layers:
             assert isinstance(mod, CodeTransformerLayer)
             content_stream_out = mod.forward(content_stream_out, src_mask=attn_mask_h,
                           src_key_padding_mask=src_key_padding_mask,
                           relative_distances=relative_distances)
+        if self.norm is not None:
+            content_stream_out = self.norm(content_stream_out)
 
         return content_stream_out

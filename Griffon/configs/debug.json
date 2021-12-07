@@ -4,8 +4,8 @@
     "training":{
         "warmup_steps" : 2000,
         "lr_mult"      : 0.1,
-        "epochs"       : 30,
-        "batch_size"   : 128
+        "epochs"       : 5,
+        "batch_size"   : 64
     },
 
     "architecture":{
