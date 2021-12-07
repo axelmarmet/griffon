@@ -4,3 +4,5 @@ data
 models
 notebooks
 semantic_tests
+
+secrets

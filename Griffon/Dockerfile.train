@@ -1,0 +1,23 @@
+# syntax=docker/dockerfile:1
+
+FROM nvcr.io/nvidia/pytorch:21.11-py3
+
+RUN which pip
+COPY docker_pip_requirements.txt .
+RUN pip install -r docker_pip_requirements.txt
+
+COPY --chown=root:root entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
+CMD ["./entrypoint.sh"]
+# RUN adduser worker
+# USER worker
+# WORKDIR /home/worker
+
+# ENV PATH="/home/worker/.local/bin:${PATH}"
+
+# COPY --chown=worker:worker . .
+
+# # RUN pip install -e .
+
+# CMD ["tail", "-f", "/dev/null"]

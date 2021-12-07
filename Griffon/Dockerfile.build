@@ -2,9 +2,9 @@
 
 FROM nvcr.io/nvidia/pytorch:21.11-py3
 
-
-COPY  environment_docker.yml .
-RUN conda env create -f environment_docker.yml
+RUN which pip
+COPY docker_pip_requirements.txt .
+RUN pip install -r docker_pip_requirements.txt
 
 RUN apt-get update && apt-get install -y openssh-server
 RUN mkdir /var/run/sshd
@@ -19,15 +19,3 @@ RUN echo "export VISIBLE=now" >> /etc/profile
 
 EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D"]
-
-# RUN adduser worker
-# USER worker
-# WORKDIR /home/worker
-
-# ENV PATH="/home/worker/.local/bin:${PATH}"
-
-# COPY --chown=worker:worker . .
-
-# # RUN pip install -e .
-
-# CMD ["tail", "-f", "/dev/null"]

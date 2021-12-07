@@ -92,7 +92,6 @@ notebook==6.4.4
 numpy==1.21.2
 olefile==0.46
 packaging==21.0
-pandas==0.24.2
 pandocfilters==1.5.0
 parso==0.8.2
 path-and-address==2.0.1

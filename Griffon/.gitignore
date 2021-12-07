@@ -1,5 +1,7 @@
 data
 
+secrets
+
 models/*.pickle
 
 *.mdb
