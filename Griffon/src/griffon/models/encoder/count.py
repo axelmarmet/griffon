@@ -141,7 +141,8 @@ def run(args:argparse.Namespace, rank:int, world_size:int):
     best_model = train(model, datasets, config, args)
 
     if args.is_main:
-        torch.save(best_model, "models/my_best_model")
+        filename = os.path.join(args.save_dir, "best_model")
+        torch.save(best_model.state_dict(), filename)
 
     if args.distributed:
         cleanup()
@@ -166,6 +167,10 @@ if __name__ == "__main__":
     arg_parser.add_argument('--distributed', dest='distributed', action='store_true', help="""
         use distributed training, if set then device must not be specified
     """)
+    arg_parser.add_argument(
+        "--save_dir", required=True
+    )
+
     arg_parser.add_argument('--use_wandb', dest='use_wandb', action='store_true')
 
     args = arg_parser.parse_args()

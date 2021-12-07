@@ -112,8 +112,6 @@ def train(model, datasets:Dict[str, CounTDataset], config:Dict[str,Any], args:Na
                 opt.step_and_update_lr()
                 opt.zero_grad()
 
-            if i == 10:
-                break
 
         # get mean loss and not sum of mean batch loss
         total_loss /= epochs
@@ -131,7 +129,7 @@ def train(model, datasets:Dict[str, CounTDataset], config:Dict[str,Any], args:Na
             print("Epoch {}: Validation: {:.4f}, Loss: {:.4f}".format(
                 epoch + 1, accs['val'], total_loss.item()))
 
-            path = os.path.join("models", f"model_{epoch+1}.pkl")
+            path = os.path.join(args.save_dir, f"model_{epoch+1}.pkl")
             torch.save(model.state_dict(), path)
 
             if args.use_wandb:
@@ -171,8 +169,6 @@ def test(dataloaders, model, args:Namespace, verbose:bool, ignore_pad_idx:bool=F
 
             results.append(res)
 
-            if i == 100:
-                break
 
         accs[dataset] = results = torch.cat(results).mean()
 
