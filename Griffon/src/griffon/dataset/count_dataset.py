@@ -40,7 +40,14 @@ class CounTDataset(Dataset[CounTBatch]):
         self.pad_id = self.vocab[PAD_TOKEN]
 
     def to_dataloader(self, batch_size:int, sampler:Optional[Sampler]=None):
-        return DataLoader(self, batch_size=batch_size, sampler=sampler, shuffle=sampler is None, collate_fn=self.collate_fn) # type: ignore
+        return DataLoader(
+            self,
+            batch_size=batch_size,
+            sampler=sampler,
+            shuffle=sampler is None,
+            collate_fn=self.collate_fn, # type: ignore
+            pin_memory=True,
+            num_workers=4)
 
     def __getitem__(self, index:int)->CounTSample:
         sample:CounTSample = pickle.load(open(self.files[index], "rb"))
