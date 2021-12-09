@@ -25,13 +25,8 @@ from tqdm import tqdm
 from typing import Tuple
 
 
-args = Namespace(vocab_path="../../../../../models/vocab.pickle",
-                 config_path="../../../../../configs/config.json",
-                 stage1_root="../../../../../data/processed/stage1")
-
-
-def get_vocab_transformer(args: Namespace) -> VocabTransform:
-    vocab = pickle.load(open(args.vocab_path, "rb"))
+def get_vocab_transformer(path: str) -> VocabTransform:
+    vocab = pickle.load(open(path, "rb"))
     return VocabTransform(vocab)
 
 
@@ -87,7 +82,7 @@ def process_project(packed_args:Tuple[Namespace,str]):
 
     config = load_config(args.config_path)
 
-    vocab_transformer = get_vocab_transformer(args)
+    vocab_transformer = get_vocab_transformer(args.vocab_path)
     distances_transformer = get_distances_transformer(config)
 
     samples_pattern = os.path.join(project_root, "**", "*.pickle")

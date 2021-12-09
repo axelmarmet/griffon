@@ -8,13 +8,16 @@ class VocabTransform:
         vocab.set_default_index(vocab["<unk>"])
         self.vocab = vocab
 
-    def process_statement(self, statement:Stage1Statement)->Stage1Statement:
+    def process_statement(self, statement:Stage1Statement, no_unk:bool=False)->Stage1Statement:
 
         vocabularized_tokens = []
         for i, token in enumerate(statement.tokens):
             assert all([isinstance(st, str) for st in
                         token.subtokens]), f"Some sub tokens ({token.subtokens}) do not have string values. Has this sample " \
                                            f"already been vocabularized?"
+            if no_unk:
+                assert all([subtoken in self.vocab for subtoken in token.subtokens]), \
+                    f"Some sub tokens ({token.subtokens}) are not in the vocab"
 
             vocabularized_token = Stage2Token(subtokens=self.vocab(token.subtokens),
                                               original_subtokens=token.subtokens)

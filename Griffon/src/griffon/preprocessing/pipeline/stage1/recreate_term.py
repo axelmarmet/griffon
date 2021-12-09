@@ -40,7 +40,11 @@ class TreeShortener(Transformer):
     def __default__(self, data, children, meta):
         new_children = []
         for child in children:
-            if isinstance(child, Tree) and child.data != "constructor_rel" and len(child.children) == 1:
+            if  isinstance(child, Tree) and \
+                child.data != "constructor_rel" and \
+                child.data != "constructor_type" and \
+                len(child.children) == 1:
+
                 new_children.append(child.children[0])
             elif isinstance(child, Tree) and child.data == "names__inductive":
                 new_children.append(child.children[0])
@@ -110,10 +114,13 @@ def get_token_sequence(de_bruijn_stack:List[str], node:Union[MyTree, MyToken], v
         return [(node.value, node.id)]
     elif node.data == "constructor_anonymous":
         assert len(node.children) == 0
-        return [("_", node.id)]
+        return [("anonVal", node.id)]
     elif node.data == "constructor_prop":
         assert len(node.children) == 0
         return [("Prop", node.id)]
+    elif node.data == "constructor_type":
+        assert len(node.children) == 1
+        return [("Type", node.id)]
     elif node.data == "constructor_set":
         assert len(node.children) == 0
         return [("Set", node.id)]

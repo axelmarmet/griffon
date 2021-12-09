@@ -144,6 +144,7 @@ def train(model, datasets:Dict[str, CounTDataset], config:Dict[str,Any], args:Na
 
     return best_model
 
+@torch.no_grad()
 def test(dataloaders, model, args:Namespace, verbose:bool, ignore_pad_idx:bool=False, pad_idx = -1):
 
     assert not (ignore_pad_idx and pad_idx == -1), \
