@@ -6,6 +6,9 @@ RUN which pip
 COPY docker_pip_requirements.txt .
 RUN pip install -r docker_pip_requirements.txt
 
+COPY --chown=root:root entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
 RUN apt-get update && apt-get install -y openssh-server
 RUN mkdir /var/run/sshd
 RUN echo 'root:root' | chpasswd

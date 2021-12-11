@@ -19,4 +19,7 @@ git clone https://github.com/axelmarmet/griffon.git
 )
 
 cd griffon/Griffon
-eval $TRAIN_CMD
+
+if [[ -z "${TRAIN_CMD}" ]]; then
+    eval $TRAIN_CMD
+fi
