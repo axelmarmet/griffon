@@ -94,9 +94,7 @@ def train(model, datasets:Dict[str, CounTDataset], config:Dict[str,Any], args:Na
             inp.to(args.device)
             tgt_ids = tgt_ids.to(args.device)
 
-            if ignore_pad_idx:
-                tgt_ids[tgt_ids == pad_idx] = TGT_IGNORE_INDEX
-
+            assert torch.all(tgt_ids != pad_idx)
 
             pred = model.forward(inp, predict=True)
 

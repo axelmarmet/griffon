@@ -46,6 +46,9 @@ class Stage2Statement:
     tokens : List[Stage2Token]
     distances : List[Distance]
 
+    def __str__(self):
+        return self.name + " : " + " ".join(["_".join([str(subtoken) for subtoken in token.original_subtokens]) for token in self.tokens])
+
 @dataclass
 class Stage1Sample:
     hypotheses : List[Stage1Statement]
@@ -149,6 +152,10 @@ class CounTInput:
 class CounTBatch:
     input: CounTInput
     target: Tensor # shape `batch x max_number_tokens x num_subtokens`
+
+    def to(self, *args):
+        self.input.to(*args)
+        self.target = self.target.to(*args)
 
     def pin_memory(self):
         self.input = self.input.pin_memory()

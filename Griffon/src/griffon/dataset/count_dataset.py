@@ -56,7 +56,8 @@ class CounTDataset(Dataset[CounTBatch]):
     def __len__(self) -> int:
         return len(self.files)
 
-    def collate_fn(self, samples: List[CounTSample])->CounTBatch:
+    @staticmethod
+    def collate_fn(samples: List[CounTSample])->CounTBatch:
 
         # we need to go through every tensor and pad it before stacking them along
         # the batching digm

@@ -10,9 +10,9 @@ from griffon.constants import MASK_TOKEN
 
 from griffon.coq_dataclasses import Stage1Statement, Stage2Statement
 from griffon.preprocessing.graph.transform import DistancesTransformer
-from griffon.preprocessing.pipeline.stage2.stage2 import get_distances_transformer, get_vocab_transformer
-from griffon.preprocessing.pipeline.stage2.vocab import VocabTransform
-from griffon.preprocessing.pipeline.utils import connect_subtokens
+from griffon.preprocessing.stage2.stage2 import get_distances_transformer, get_vocab_transformer
+from griffon.preprocessing.stage2.vocab import VocabTransform
+from griffon.preprocessing.utils import connect_subtokens
 from griffon.utils import load_config
 
 def process_statements(statements:List[Stage1Statement],

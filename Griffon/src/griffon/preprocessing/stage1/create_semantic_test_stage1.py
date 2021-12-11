@@ -4,9 +4,9 @@ import os
 from re import S
 from typing import Dict, List
 from griffon.coq_dataclasses import Stage1Statement, Stage1Token
-from griffon.preprocessing.pipeline.utils import connect_subtokens
 from griffon.utils import iter_proofs_in_file
-from griffon.preprocessing.pipeline.stage1.recreate_term import Stage1StatementCreator
+from griffon.preprocessing.utils import connect_subtokens
+from griffon.preprocessing.stage1.recreate_term import Stage1StatementCreator
 from CoqGym.utils import SexpCache
 from CoqGym.gallina import GallinaTermParser
 from nltk.tokenize.regexp import RegexpTokenizer
