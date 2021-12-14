@@ -1,5 +1,5 @@
 data
-
+wandb
 secrets
 
 models/*.pickle
