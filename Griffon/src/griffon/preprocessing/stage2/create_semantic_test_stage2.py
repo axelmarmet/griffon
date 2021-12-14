@@ -4,6 +4,9 @@ import json
 import os
 import pickle
 
+from shutil import copyfile
+
+
 from argparse import Namespace
 from typing import Dict, List
 from griffon.constants import MASK_TOKEN
@@ -46,10 +49,10 @@ if __name__ == "__main__":
         """
     )
     arg_parser.add_argument(
-        "--semantic_tests_root", type=str, default="semantic_tests", help="path to the semantic test root"
+        "--semantic_tests_root", type=str, default="data/semantic_tests", help="path to the semantic test root"
     )
     arg_parser.add_argument(
-        "--vocab", type=str, default="models/vocab.pickle", help="The path to the pickled torchtext vocab"
+        "--vocab", type=str, default="data/base/stage2/vocab.pickle", help="The path to the pickled torchtext vocab"
     )
     arg_parser.add_argument(
         "--config", type=str, default="configs/config.json", help="The path to the config file"
@@ -89,3 +92,4 @@ if __name__ == "__main__":
 
         pickle.dump(stage_2_statements, open(os.path.join(output_dir, f"{filename}.pkl"), "wb"))
 
+    copyfile(args.vocab, os.path.join(args.semantic_tests_root, "vocab.pickle"))
