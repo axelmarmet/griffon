@@ -85,15 +85,14 @@ class SemanticTestCaseDataset(Dataset):
             target_ids = target_ids,
         )
 
-    def to_dataloader(self, batch_size:int, sampler:Optional[Sampler]=None):
+    def to_dataloader(self):
         return DataLoader(
             self,
-            batch_size=batch_size,
-            sampler=sampler,
-            shuffle=sampler is None,
-            collate_fn=self.collate_fn, # type: ignore
+            batch_size=1,
+            shuffle=False,
+            collate_fn=(lambda x: x[0]), # type: ignore
             pin_memory=True,
-            num_workers=4)
+            num_workers=1)
 
     def __getitem__(self, index:int)->SemanticTestCases:
 

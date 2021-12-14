@@ -7,7 +7,7 @@ import random
 import numpy as np
 import torch
 
-from typing import Callable, List, Optional, TypeVar
+from typing import Any, Callable, Dict, List, Optional, TypeVar
 from torch import Tensor
 
 from CoqGym.utils import update_env
@@ -64,6 +64,9 @@ def iter_proofs_in_file(filename, callback:Callable):
         del proof_data["env_delta"]
         proof_data["env"] = env
         callback(filename, proof_data)
+
+def print_metrics(metrics):
+    print(json.dumps(metrics, sort_keys=True, indent=4))
 
 def set_seed(seed=0):
     random.seed(seed)
