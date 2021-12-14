@@ -162,6 +162,7 @@ def semantic_test(dataloader:DataLoader[SemanticTestCases], model, args:Namespac
         predictions:Tensor = model.forward(inp, predict=True).detach()
 
         if verbose:
+            itos = model.vocab.get_itos()
             for pred, targets, name, orig_s, masked_s in zip(predictions,
                                                             tgt_ids, test_case.names,
                                                             test_case.original_sentences,
@@ -178,8 +179,8 @@ def semantic_test(dataloader:DataLoader[SemanticTestCases], model, args:Namespac
                 print(f"masked   : {masked_s}")
                 print("------------------")
                 for i in range(pred.shape[0]):
-                    print(f"expected : {model.vocab[targets[i]]}")
-                    print(f"got : {model.vocab[pred[i]]}")
+                    print(f"expected : {itos[targets[i]]}")
+                    print(f"got : {itos[pred[i]]}")
                 print("------------------")
 
         mask = tgt_ids != TGT_IGNORE_INDEX

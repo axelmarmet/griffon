@@ -52,7 +52,7 @@ class SemanticTestCaseDataset(Dataset):
 
         self.files = sorted(glob(os.path.join(sample_path, "*.pkl")))
         self.masks = json.load(open(mask_file, "r"))
-        self.vocab = pickle.load(open(os.path.join(vocab_path, "vocab.pickle"), "rb"))
+        self.vocab = pickle.load(open(vocab_path, "rb"))
         self.pad_id = self.vocab[PAD_TOKEN]
         self.mask_id = self.vocab[MASK_TOKEN]
 

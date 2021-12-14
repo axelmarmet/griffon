@@ -7,7 +7,7 @@ import pickle
 from griffon.utils import load_config
 from griffon.coq_dataclasses import Stage1Sample
 
-from griffon.preprocessing.pipeline.stage2.vocab import VocabTransform
+from griffon.preprocessing.stage2.vocab import VocabTransform
 from griffon.preprocessing.graph.distances import PersonalizedPageRank, ShortestPaths, AncestorShortestPaths, SiblingShortestPaths, DistanceBinning
 from griffon.preprocessing.graph.binning import ExponentialBinning
 from griffon.preprocessing.graph.transform import DistancesTransformer
