@@ -5,30 +5,30 @@
         "warmup_steps"         : 4000,
         "lr_mult"              : 0.05,
         "epochs"               : 30,
-        "batch_size"           : 256,
+        "batch_size"           : 128,
         "simulated_batch_size" : 512,
         "ignore_pad_idx"       : true
     },
 
     "architecture":{
-        "subtoken_embedding_dim":1024,
-        "token_embedding_dim":2048,
+        "subtoken_embedding_dim":512,
+        "token_embedding_dim":512,
         "num_subtokens":5,
         "scale_token_embeddings":false,
         "activation_fn":"gelu",
         "transformer":{
             "type":"code",
-            "num_layers":6,
+            "num_layers":1,
             "encoder_layer":{
-                "d_model":2048,
+                "d_model":512,
                 "nhead":8,
-                "dim_feedforward":4096,
+                "dim_feedforward":1024,
                 "num_relative_distances":4
             },
             "norm":{
                 "type":"layer_norm",
                 "eps":1e-5,
-                "d_model":2048
+                "d_model":512
             }
         }
     }
