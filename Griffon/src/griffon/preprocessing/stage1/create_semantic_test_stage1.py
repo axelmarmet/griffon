@@ -69,11 +69,14 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
 
     statement_creator = Stage1StatementCreator(GallinaTermParser(caching=False), RegexpTokenizer(r"[^\W_]+|[:,().]"))
+
+    raw_dir = os.path.join(args.semantic_test_path, "raw")
+
     sexp_cache = SexpCache(
-        os.path.join(args.semantic_test_path, "sexp_cache"), readonly=True)
+        os.path.join(raw_dir, "sexp_cache"), readonly=True)
 
 
-    files = glob(os.path.join(args.semantic_test_path, "data", "**", "*.json"))
+    files = glob(os.path.join(raw_dir, "data", "**", "*.json"))
     assert len(files) > 0, "no files matched"
 
     output_dir = os.path.join(args.semantic_test_path, "stage1")
