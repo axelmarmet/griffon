@@ -13,6 +13,7 @@ from torch import Tensor
 
 from torch.utils.data.dataloader import DataLoader
 from torch.utils.data import DistributedSampler
+from torch.utils.data.dataset import Dataset
 from griffon.constants import TGT_IGNORE_INDEX
 from griffon.coq_dataclasses import CounTBatch
 
@@ -28,8 +29,7 @@ import numpy as np
 import wandb
 
 def train(model,
-          datasets:Dict[str, CounTDataset],
-          semantic_ds:SemanticTestCaseDataset,
+          datasets:Dict[str, Dataset],
           config:Dict[str,Any],
           args:Namespace):
 
@@ -48,7 +48,9 @@ def train(model,
     steps_before_opt = training_config["simulated_batch_size"] // training_config["batch_size"]
 
     # get the dataloaders
-    train_split, val_split, test_split = datasets["train"], datasets["valid"], datasets["test"]
+    train_split:CounTDataset = datasets["train"] #type: ignore
+    val_split:CounTDataset = datasets["valid"] #type: ignore
+    semantic_tests:SemanticTestCaseDataset = datasets["semantic_test"] # type: ignore
 
     train_sampler = DistributedSampler(train_split) if args.distributed else None
     val_sampler = DistributedSampler(val_split, shuffle=False) if args.distributed else None
@@ -66,7 +68,7 @@ def train(model,
 
     train_dataloader = train_split.to_dataloader(batch_size, train_sampler)
     val_dataloader   = val_split.to_dataloader(batch_size, val_sampler)
-    sem_test_dataloader = semantic_ds.to_dataloader()
+    sem_test_dataloader = semantic_tests.to_dataloader()
 
     # get the optimizer
     opt = ScheduledOptim(

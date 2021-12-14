@@ -15,6 +15,7 @@ import json
 from torchtext.vocab import Vocab
 import wandb
 from griffon.dataset.count_dataset import CounTDataset
+from griffon.dataset.semantic_testcase_dataset import SemanticTestCaseDataset
 from griffon.models.encoder.code_transformer import CodeTransformer
 
 from griffon.coq_dataclasses import CounTInput
@@ -124,9 +125,9 @@ def run(args:argparse.Namespace, rank:int, world_size:int):
 
     # get the dataset
     datasets = {}
-    datasets["train"] = CounTDataset(args.data_root, "train")
-    datasets["test"] = CounTDataset(args.data_root, "test")
-    datasets["valid"] = CounTDataset(args.data_root, "valid")
+    datasets["train"] = CounTDataset(args.count_root, "train")
+    datasets["valid"] = CounTDataset(args.count_root, "valid")
+    datasets["semantic_test"] = SemanticTestCaseDataset(args.semantic_tests_root)
 
     model = CounT(datasets["train"].vocab, config["architecture"])
     model = model.to(args.device)
@@ -156,7 +157,7 @@ if __name__ == "__main__":
         """
     )
     arg_parser.add_argument(
-        "--data_root", type=str, default="data/CounT", help="The root directory of the dataset"
+        "--data_root", type=str, default="data", help="The root directory of the dataset"
     )
     arg_parser.add_argument(
         "--config", type=str, required=True, help="The config file that contains all hyperparameters"
@@ -170,10 +171,11 @@ if __name__ == "__main__":
     arg_parser.add_argument(
         "--save_dir", required=True
     )
-
     arg_parser.add_argument('--use_wandb', dest='use_wandb', action='store_true')
 
     args = arg_parser.parse_args()
+    setattr(args, "count_root", os.path.join(args.data_root, "CounT"))
+    setattr(args, "semantic_tests_root", os.path.join(args.data_root, "semantic_tests"))
 
     assert not (args.distributed and args.device != "cpu"), "flag --distributed cannot be set at the same time that a device is given"
 

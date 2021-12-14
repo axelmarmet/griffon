@@ -41,12 +41,16 @@ class SemanticTestCases:
 
 class SemanticTestCaseDataset(Dataset):
 
-    def __init__(self, sample_paths:str, vocab_path:str, mask_file:str):
+    def __init__(self, data_root:str):
 
-        assert os.path.exists(sample_paths), f"Path {sample_paths} does not exist"
+        sample_path = os.path.join(data_root, "stage2")
+        mask_file = os.path.join(data_root, "masks.json")
+        vocab_path = os.path.join(data_root, "vocab.pickle")
+
+        assert os.path.exists(sample_path), f"Path {sample_path} does not exist"
         assert os.path.exists(mask_file), f"Path {mask_file} does not exist"
 
-        self.files = sorted(glob(os.path.join(sample_paths, "*.pkl")))
+        self.files = sorted(glob(os.path.join(sample_path, "*.pkl")))
         self.masks = json.load(open(mask_file, "r"))
         self.vocab = pickle.load(open(os.path.join(vocab_path, "vocab.pickle"), "rb"))
         self.pad_id = self.vocab[PAD_TOKEN]
