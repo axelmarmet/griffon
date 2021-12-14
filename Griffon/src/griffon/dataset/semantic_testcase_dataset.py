@@ -19,7 +19,7 @@ from torch.utils.data.sampler import Sampler
 
 from griffon.coq_dataclasses import *
 from griffon.dataset.count_dataset import CounTDataset
-from griffon.preprocessing.pipeline.stage2.create_semantic_test_stage2 import verify_masks
+from griffon.preprocessing.stage2.create_semantic_test_stage2 import verify_masks
 from griffon.utils import pad_mask, pad_list
 
 from griffon.constants import NUM_SUB_TOKENS, MASK_TOKEN, PAD_TOKEN, TGT_IGNORE_INDEX
@@ -34,6 +34,10 @@ class SemanticTestCases:
 
     def to(self, *args):
         self.batch.to(*args)
+
+    def pin_memory(self):
+        self.batch = self.batch.pin_memory()
+        return self
 
 class SemanticTestCaseDataset(Dataset):
 

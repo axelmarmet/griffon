@@ -18,6 +18,8 @@ data-dirs:
 	mkdir -p $(DATA_DIR_SEM_TEST_STAGE2)
 
 data:
+	data gdown https://drive.google.com/uc\?export\=download\&id\=1CGQ_XKQKlrVt-grNzVI1x3laxIJYmWft
+
 
 test: | data/intermediary/corpus
 	echo "helooo"
