@@ -211,7 +211,7 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
     setattr(args, "data_root",      os.path.join(args.coq_gym_root, "data"))
     setattr(args, "splits_file",    os.path.join(args.coq_gym_root, "projs_split.json"))
-    setattr(args, "tactic_grammar", os.path.join(args.coq_gym_root, "ASTactic", "tactics.ebnf"))
+    setattr(args, "tactic_grammar", os.path.join(args.coq_gym_root, "tactics.ebnf"))
     setattr(args, "sexp_cache",     os.path.join(args.coq_gym_root, "sexp_cache"))
 
     proof_files = glob(f"{args.data_root}/**/*.json", recursive=True)
