@@ -49,15 +49,13 @@ if __name__ == "__main__":
         """
     )
     arg_parser.add_argument(
-        "--semantic_tests_root", type=str, default="data/semantic_tests", help="path to the semantic test root"
-    )
-    arg_parser.add_argument(
-        "--vocab", type=str, default="data/base/stage2/vocab.pickle", help="The path to the pickled torchtext vocab"
-    )
-    arg_parser.add_argument(
-        "--config", type=str, default="configs/config.json", help="The path to the config file"
+        "--data_root", type=str, required=True
     )
     args = arg_parser.parse_args()
+
+    setattr(args, "semantic_tests_root", os.path.join(args.data_root, "semantic_tests"))
+    setattr(args, "vocab", os.path.join(args.data_root, "base", "stage2", "vocab.pkl"))
+    setattr(args, "config", os.path.join(args.data_root, "base", "stage2", "distance_transformer.json"))
 
     masks_path = os.path.join(args.semantic_tests_root, "masks.json")
     assert os.path.exists(masks_path), f"{masks_path} does not exist, did you forget to modify \"new_masks.json\""
@@ -91,5 +89,3 @@ if __name__ == "__main__":
             statements, vocab_transformer, distances_transformer)
 
         pickle.dump(stage_2_statements, open(os.path.join(output_dir, f"{filename}.pkl"), "wb"))
-
-    copyfile(args.vocab, os.path.join(args.semantic_tests_root, "vocab.pickle"))

@@ -16,7 +16,7 @@ from griffon.coq_dataclasses import CounTSample, Stage2Sample, Stage2Statement, 
 from griffon.utils import pad_list, set_seed
 
 def create_from_stage2(args:Namespace):
-    vocab = pickle.load(open(os.path.join(args.stage2_root, "vocab.pickle"), "rb"))
+    vocab = pickle.load(open(os.path.join(args.stage2_root, "vocab.pkl"), "rb"))
     pad_id = vocab[PAD_TOKEN]
 
     def transform_statement(statement: Stage2Statement)->CounTSample:
@@ -109,13 +109,11 @@ if __name__ == '__main__':
         """
     )
     arg_parser.add_argument(
-        "--stage2_root", type=str, default="data/processed/stage2", help="The root folder of the stage 2 preprocessed data"
+        "--data_root", type=str, default="data"
     )
-    arg_parser.add_argument(
-        "--target_root", type=str, default="data/CounT", help="The desired root folder of the CounT data"
-    )
-
     args = arg_parser.parse_args()
+    setattr(args, "stage2_root", os.path.join(args.data_root, "base", "stage2"))
+    setattr(args, "target_root", os.path.join(args.data_root, "CounT"))
 
     set_seed(0)
 

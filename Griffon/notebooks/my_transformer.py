@@ -7,29 +7,29 @@ from IPython import get_ipython
 #get_ipython().run_line_magic('matplotlib', 'inline')
 
 # %% [markdown]
-# 
+#
 # Language Translation with nn.Transformer and torchtext
 # ======================================================
-# 
+#
 # This tutorial shows, how to train a translation model from scratch using
-# Transformer. We will be using `Multi30k <http://www.statmt.org/wmt16/multimodal-task.html#task1>`__ 
+# Transformer. We will be using `Multi30k <http://www.statmt.org/wmt16/multimodal-task.html#task1>`__
 # dataset to train a German to English translation model.
-# 
-# 
+#
+#
 # %% [markdown]
 # Data Sourcing and Processing
 # ----------------------------
-# 
+#
 # `torchtext library <https://pytorch.org/text/stable/>`__ has utilities for creating datasets that can be easily
 # iterated through for the purposes of creating a language translation
-# model. In this example, we show how to use torchtext's inbuilt datasets, 
+# model. In this example, we show how to use torchtext's inbuilt datasets,
 # tokenize a raw text sentence, build vocabulary, and numericalize tokens into tensor. We will use
 # `Multi30k dataset from torchtext library <https://pytorch.org/text/stable/datasets.html#multi30k>`__
-# that yields a pair of source-target raw sentences. 
-# 
-# 
-# 
-# 
+# that yields a pair of source-target raw sentences.
+#
+#
+#
+#
 
 # %%
 import pickle
@@ -44,20 +44,20 @@ tokenizer = Tokenizer()
 # %% [markdown]
 # Seq2Seq Network using Transformer
 # ---------------------------------
-# 
+#
 # Transformer is a Seq2Seq model introduced in `“Attention is all you
 # need” <https://papers.nips.cc/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf>`__
-# paper for solving machine translation tasks. 
+# paper for solving machine translation tasks.
 # Below, we will create a Seq2Seq network that uses Transformer. The network
 # consists of three parts. First part is the embedding layer. This layer converts tensor of input indices
 # into corresponding tensor of input embeddings. These embedding are further augmented with positional
-# encodings to provide position information of input tokens to the model. The second part is the 
-# actual `Transformer <https://pytorch.org/docs/stable/generated/torch.nn.Transformer.html>`__ model. 
+# encodings to provide position information of input tokens to the model. The second part is the
+# actual `Transformer <https://pytorch.org/docs/stable/generated/torch.nn.Transformer.html>`__ model.
 # Finally, the output of Transformer model is passed through linear layer
-# that give un-normalized probabilities for each token in the target language. 
-# 
-# 
-# 
+# that give un-normalized probabilities for each token in the target language.
+#
+#
+#
 
 # %%
 from torch import Tensor
@@ -101,7 +101,7 @@ class TokenEmbedding(nn.Module):
     def forward(self, tokens: Tensor):
         return self.embedding(tokens.long()) * math.sqrt(self.emb_size)
 
-# Seq2Seq Network 
+# Seq2Seq Network
 class Seq2SeqTransformer(nn.Module):
     def __init__(self,
                  num_encoder_layers: int,
@@ -134,7 +134,7 @@ class Seq2SeqTransformer(nn.Module):
                 memory_key_padding_mask: Tensor):
         src_emb = self.positional_encoding(self.src_tok_emb(src))
         tgt_emb = self.positional_encoding(self.tgt_tok_emb(trg))
-        outs = self.transformer(src_emb, tgt_emb, src_mask, tgt_mask, None, 
+        outs = self.transformer(src_emb, tgt_emb, src_mask, tgt_mask, None,
                                 src_padding_mask, tgt_padding_mask, memory_key_padding_mask)
         return self.generator(outs)
 
@@ -150,10 +150,10 @@ class Seq2SeqTransformer(nn.Module):
 # %% [markdown]
 # During training, we need a subsequent word mask that will prevent model to look into
 # the future words when making predictions. We will also need masks to hide
-# source and target padding tokens. Below, let's define a function that will take care of both. 
-# 
-# 
-# 
+# source and target padding tokens. Below, let's define a function that will take care of both.
+#
+#
+#
 
 # %%
 def generate_square_subsequent_mask(sz):
@@ -174,11 +174,11 @@ def create_mask(src, tgt):
     return src_mask, tgt_mask, src_padding_mask, tgt_padding_mask
 
 # %% [markdown]
-# Let's now define the parameters of our model and instantiate the same. Below, we also 
+# Let's now define the parameters of our model and instantiate the same. Below, we also
 # define our loss function which is the cross-entropy loss and the optmizer used for training.
-# 
-# 
-# 
+#
+#
+#
 
 # %%
 
@@ -191,8 +191,8 @@ BATCH_SIZE = 8
 NUM_ENCODER_LAYERS = 3
 NUM_DECODER_LAYERS = 3
 
-transformer = Seq2SeqTransformer(num_encoder_layers=NUM_ENCODER_LAYERS, 
-                                 num_decoder_layers=NUM_DECODER_LAYERS, 
+transformer = Seq2SeqTransformer(num_encoder_layers=NUM_ENCODER_LAYERS,
+                                 num_decoder_layers=NUM_DECODER_LAYERS,
                                  nhead=NHEAD,
                                  vocab=vocab,
                                  dim_feedforward=FFN_HID_DIM)
@@ -210,20 +210,20 @@ optimizer = torch.optim.Adam(transformer.parameters(), lr=0.0001, betas=(0.9, 0.
 # %% [markdown]
 # Collation
 # ---------
-# 
-# As seen in the ``Data Sourcing and Processing`` section, our data iterator yields a pair of raw strings. 
-# We need to convert these string pairs into the batched tensors that can be processed by our ``Seq2Seq`` network 
+#
+# As seen in the ``Data Sourcing and Processing`` section, our data iterator yields a pair of raw strings.
+# We need to convert these string pairs into the batched tensors that can be processed by our ``Seq2Seq`` network
 # defined previously. Below we define our collate function that convert batch of raw strings into batch tensors that
-# can be fed directly into our model.   
-# 
-# 
-# 
+# can be fed directly into our model.
+#
+#
+#
 # %% [markdown]
-# Let's define training and evaluation loop that will be called for each 
+# Let's define training and evaluation loop that will be called for each
 # epoch.
-# 
-# 
-# 
+#
+#
+#
 
 # %%
 from tqdm import tqdm
@@ -234,7 +234,7 @@ def train_epoch(model, optimizer):
     losses = 0
     train_iter = UsefulItemsDataset("../data/processed/recommandations/train")
     train_dataloader = get_data_loader(train_iter, vocab, tokenizer, batch_size=BATCH_SIZE)
-    
+
     for src, tgt in tqdm(train_dataloader):
         if src.shape[0] > 300 or tgt.shape[0] > 300:
             continue
@@ -268,10 +268,10 @@ def evaluate(model):
     val_dataloader = get_data_loader(val_iter, vocab, tokenizer, batch_size=BATCH_SIZE)
 
     for src, tgt in val_dataloader:
-        
+
         if src.shape[0] > 300 or tgt.shape[0] > 300:
             continue
-        
+
         src = src.to(DEVICE)
         tgt = tgt.to(DEVICE)
 
@@ -280,7 +280,7 @@ def evaluate(model):
         src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = create_mask(src, tgt_input)
 
         logits = model(src, tgt_input, src_mask, tgt_mask,src_padding_mask, tgt_padding_mask, src_padding_mask)
-        
+
         tgt_out = tgt[1:, :]
         loss = loss_fn(logits.reshape(-1, logits.shape[-1]), tgt_out.reshape(-1))
         losses += loss.item()
@@ -289,9 +289,9 @@ def evaluate(model):
 
 # %% [markdown]
 # Now we have all the ingredients to train our model. Let's do it!
-# 
-# 
-# 
+#
+#
+#
 
 # %%
 from timeit import default_timer as timer
@@ -319,7 +319,7 @@ with open("../models/val_losses" + time + ".txt", "wb") as f:
 with open("../models/train_losses" + time + ".txt", "wb") as f:
     pickle.dump(train_losses, f)
 
-# function to generate output sequence using greedy algorithm 
+# function to generate output sequence using greedy algorithm
 def greedy_decode(model, src, src_mask, max_len, start_symbol):
     src = src.to(DEVICE)
     src_mask = src_mask.to(DEVICE)
@@ -360,10 +360,10 @@ def translate(model: torch.nn.Module, src_sentence: str):
 # %% [markdown]
 # References
 # ----------
-# 
+#
 # 1. Attention is all you need paper.
 #    https://papers.nips.cc/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf
 # 2. The annotated transformer. https://nlp.seas.harvard.edu/2018/04/03/attention.html#positional-encoding
-# 
-# 
+#
+#
 

@@ -1,8 +1,13 @@
 import argparse
 import os
+import pickle
 from numpy import sqrt
+
+import pytorch_lightning as pl
+
 import torch
 import torch.nn as nn
+import torch.optim as optim
 import torch.nn.functional as F
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -14,11 +19,14 @@ import json
 
 from torchtext.vocab import Vocab
 import wandb
+from griffon.constants import TGT_IGNORE_INDEX
 from griffon.dataset.count_dataset import CounTDataset
-from griffon.dataset.semantic_testcase_dataset import SemanticTestCaseDataset
+from griffon.dataset.semantic_testcase_dataset import SemanticTestCaseDataset, SemanticTestCases
+from griffon.metrics import top_k_metric
+from griffon.models.cosine_warmup_scheduler import CosineWarmupScheduler
 from griffon.models.encoder.code_transformer import CodeTransformer
 
-from griffon.coq_dataclasses import CounTInput
+from griffon.coq_dataclasses import CounTBatch, CounTInput
 from griffon.models.encoder.standard_transformer import Seq2SeqEncoder
 from griffon.models.encoder.train import train
 from griffon.utils import cleanup, set_seed, setup
@@ -35,40 +43,36 @@ def _get_activation_fn(activation:str)->Callable[[Tensor],Tensor]:
     else:
         raise ValueError("unknown activation function")
 
-class CounTInput(NamedTuple):
-    input_ids          : Tensor # shape `batch x max number tokens x number_subtokens`
-    distance_indices   : Tensor # shape `batch x number distances x max number tokens x max number_tokens`
-    distance_bins      : Tensor # shape `batch x number distances x number bins`
-    input_padding_mask : Tensor  # shape `batch x max_number_tokens`
 
-class CounT(nn.Module):
+class CounT(pl.LightningModule):
 
-    def __init__(self, vocab:Vocab, config:Dict[str,Any]):
+    def __init__(self, config:Dict[str,Any]):
         super(CounT, self).__init__()
+        self.save_hyperparameters(config)
 
-        self.subtoken_embedding_dim = config["subtoken_embedding_dim"]
-        self.num_subtokens = config["num_subtokens"]
-        self.d_model = config["token_embedding_dim"]
+        architecture_config = config["architecture"]
 
-        self.vocab = vocab
+        # propagate the d_model config param
+        architecture_config["code_transformer"]["encoder_layer"]["d_model"] = architecture_config["token_embedding_dim"]
+        architecture_config["code_transformer"]["norm"]["d_model"] = architecture_config["token_embedding_dim"]
 
-        self.scale_token_embeddings = config["scale_token_embeddings"]
+        self.subtoken_embedding_dim = architecture_config["subtoken_embedding_dim"]
+        self.num_subtokens = architecture_config["num_subtokens"]
+        self.d_model = architecture_config["token_embedding_dim"]
 
-        self.embedding = nn.Embedding(len(vocab), self.subtoken_embedding_dim)
+        self.vocab = pickle.load(open(architecture_config["vocab_file"], "rb"))
+
+        self.scale_token_embeddings = architecture_config["scale_token_embeddings"]
+
+        self.embedding = nn.Embedding(len(self.vocab), self.subtoken_embedding_dim)
 
         self.token_encoder = nn.Linear(self.num_subtokens * self.subtoken_embedding_dim, self.d_model)
         self.token_decoder = nn.Linear(self.d_model, self.num_subtokens * self.subtoken_embedding_dim)
-        self.activation_fn = _get_activation_fn(config["activation_fn"])
+        self.activation_fn = _get_activation_fn(architecture_config["activation_fn"])
 
-        transformer_config = config["transformer"]
-        assert transformer_config["type"] in ["code", "standard"]
-        if transformer_config["type"] == "code":
-            self.encoder = CodeTransformer(transformer_config)
-        else:
-            self.encoder = Seq2SeqEncoder(transformer_config)
+        self.encoder = CodeTransformer(architecture_config["code_transformer"])
 
-
-    def forward(self, inp:CounTInput, predict:bool=False)->Tensor:
+    def forward(self, inp:CounTInput)->Tensor:
 
         B, S = inp.input_ids.shape[:2]
 
@@ -81,18 +85,11 @@ class CounT(nn.Module):
 
         relative_distances = inp.distance_indices, inp.distance_bins
 
-        if isinstance(self.encoder, Seq2SeqEncoder):
-            token_embeddings = self.encoder.forward(
-                token_embeddings,
-                src_padding_mask=inp.input_padding_mask
-            )
-        else:
-            assert isinstance(self.encoder, CodeTransformer)
-            token_embeddings = self.encoder.forward(
-                token_embeddings,
-                src_key_padding_mask=inp.input_padding_mask,
-                relative_distances=relative_distances)
-            token_embeddings = token_embeddings.transpose(1,0)
+        token_embeddings = self.encoder.forward(
+            token_embeddings,
+            src_key_padding_mask=inp.input_padding_mask,
+            relative_distances=relative_distances)
+        token_embeddings = token_embeddings.transpose(1,0)
 
         assert token_embeddings.shape[0] == B
         assert token_embeddings.shape[1] == S
@@ -101,10 +98,89 @@ class CounT(nn.Module):
         subtokens_embeddings = self.token_decoder(token_embeddings).reshape(B, S, self.num_subtokens, self.subtoken_embedding_dim)
         subtokens_embeddings = self.activation_fn(subtokens_embeddings)
 
-        if predict:
-            return subtokens_embeddings @ self.embedding.weight.T
+        return subtokens_embeddings
+
+    def training_step(self, batch:CounTBatch, batch_idx):
+        inp:CounTInput
+        tgt_ids:Tensor
+        inp, tgt_ids = batch # type:ignore
+        preds = self.forward(inp) @ self.embedding.weight.T
+
+        len_vocab = preds.shape[-1]
+        log_probs = F.log_softmax(preds, -1).view(-1, len_vocab)
+        loss = F.nll_loss(log_probs, tgt_ids.view(-1, len_vocab), ignore_index=TGT_IGNORE_INDEX)
+
+        return loss
+
+    def validation_step(self, batch, batch_idx, dataloader_idx=0):
+
+        def semantic_validation_step(test_cases:SemanticTestCases):
+            inp, tgt_ids = test_cases.batch.as_tuple()
+            predictions:Tensor = self.forward(inp) @ self.embedding.weight.T
+
+            for pred, targets, name, orig_s, masked_s in zip(predictions,
+                                                            tgt_ids, test_cases.names,
+                                                            test_cases.original_sentences,
+                                                            test_cases.masked_sentences):
+                mask = targets != TGT_IGNORE_INDEX
+                pred = torch.argmax(pred[mask], dim=-1)
+                targets = targets[mask]
+                assert pred.shape == targets.shape
+
+                correctly_classified = torch.count_nonzero(pred == targets)
+                self.log(f"semantic test cases : {name}", correctly_classified / pred.shape[0])
+
+                # need to handle vocab from data gracefully
+
+                # print(f"{name} [{correctly_classified}/{pred.shape[0]}]")
+                # print(f"original : {orig_s}")
+                # print(f"masked   : {masked_s}")
+                # print("------------------")
+                # for i in range(pred.shape[0]):
+                #     print(f"expected : {itos[targets[i]]}")
+                #     print(f"got : {itos[pred[i]]}")
+                # print("------------------")
+
+            res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=1).mean()
+            self.log("semantic test cases", res)
+
+        def mlm_validation_step(batch:CounTBatch):
+            K = 3
+
+            inp, tgt_ids = batch.as_tuple()
+
+            predictions = self.forward(inp) @ self.embedding.weight.T
+            res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=K).mean()
+            self.log(f"validation top {K}", res)
+
+        assert dataloader_idx < 2, f"Unexpected index {dataloader_idx}"
+
+        if dataloader_idx == 0:
+            assert isinstance(batch, SemanticTestCases)
+            semantic_validation_step(batch)
         else:
-            return subtokens_embeddings
+            assert isinstance(batch, CounTBatch)
+            mlm_validation_step(batch)
+
+    def configure_optimizers(self):
+        optimizer = optim.Adam(self.parameters(), lr=self.hparams.lr) #type: ignore
+
+        # We don't return the lr scheduler because we need to apply it per iteration, not per epoch
+        self.lr_scheduler = CosineWarmupScheduler(
+            optimizer, warmup=self.hparams.warmup_steps, max_iters=self.hparams.max_iters #type:ignore
+        )
+        return optimizer
+
+    def optimizer_step(self, *args, **kwargs):
+        super().optimizer_step(*args, **kwargs)
+        self.lr_scheduler.step()
+
+
+
+def main(hparams):
+    model = CounT()
+    trainer = Trainer(gpus=hparams.gpus)
+    trainer.fit(model)
 
 def run(args:argparse.Namespace, rank:int, world_size:int):
 
@@ -163,11 +239,8 @@ if __name__ == "__main__":
         "--config", type=str, required=True, help="The config file that contains all hyperparameters"
     )
     arg_parser.add_argument(
-        "--device", type=str, default="cpu", help="The device on which to run the training (default : cpu)"
+        "--gpus", type=int, default=0, help="The number of gpus"
     )
-    arg_parser.add_argument('--distributed', dest='distributed', action='store_true', help="""
-        use distributed training, if set then device must not be specified
-    """)
     arg_parser.add_argument(
         "--save_dir", required=True
     )
@@ -177,7 +250,6 @@ if __name__ == "__main__":
     setattr(args, "count_root", os.path.join(args.data_root, "CounT"))
     setattr(args, "semantic_tests_root", os.path.join(args.data_root, "semantic_tests"))
 
-    assert not (args.distributed and args.device != "cpu"), "flag --distributed cannot be set at the same time that a device is given"
 
     if args.distributed:
         # check how many GPUs are available

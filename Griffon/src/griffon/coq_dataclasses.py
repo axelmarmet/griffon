@@ -162,5 +162,5 @@ class CounTBatch:
         self.target = self.target.pin_memory()
         return self
 
-    def __iter__(self):
-        return iter((self.input, self.target))
+    def as_tuple(self):
+        return (self.input, self.target)

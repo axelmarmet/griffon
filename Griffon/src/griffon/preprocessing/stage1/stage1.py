@@ -21,7 +21,7 @@ from CoqGym.utils import iter_proofs, SexpCache
 
 from nltk.tokenize.regexp import RegexpTokenizer
 from griffon.constants import MAX_NUM_TOKEN
-from griffon.preprocessing.pipeline.stage1.recreate_term import Stage1StatementCreator
+from griffon.preprocessing.stage1.recreate_term import Stage1StatementCreator
 
 from griffon.utils import find_in_list, get_path_relative_to_data, iter_proofs_in_file
 from griffon.coq_dataclasses import Stage1Sample, Stage1Statement
@@ -51,7 +51,7 @@ def process_file(args:Namespace, proof_path:str):
 
     projs_split = json.load(open(args.splits_file, "r"))
 
-    coq_project_index = directories.index("data") + 1
+    coq_project_index = next(i for i in reversed(range(len(directories))) if directories[i] == 'data') + 1
     coq_project = directories[coq_project_index]
     filename = directories[-1].split(".")[0]
 
@@ -69,7 +69,7 @@ def process_file(args:Namespace, proof_path:str):
         raise  ValueError(f"{coq_project} not in splits.json")
 
 
-    out_dirpath = os.path.join(args.output, split, coq_project, filename)
+    out_dirpath = os.path.join(args.stage1_root, split, coq_project, filename)
     if not os.path.exists(out_dirpath):
             os.makedirs(out_dirpath)
 
@@ -198,10 +198,7 @@ if __name__ == "__main__":
         """
     )
     arg_parser.add_argument(
-        "--coq_gym_root", type=str, default="../../../CoqGym/CoqGym", help="The root folder of CoqGym")
-    arg_parser.add_argument(
-        "--output", type=str, default="./recommandations/", help="The output file"
-    )
+        "--base_root", type=str, default="data/small", help="The root folder of CoqGym")
     arg_parser.add_argument(
         "--threads", type=int, default=None, help="""
         The number of threads used for preprocessing (default: use all threads available)
@@ -209,13 +206,15 @@ if __name__ == "__main__":
     )
 
     args = arg_parser.parse_args()
-    setattr(args, "data_root",      os.path.join(args.coq_gym_root, "data"))
-    setattr(args, "splits_file",    os.path.join(args.coq_gym_root, "projs_split.json"))
-    setattr(args, "tactic_grammar", os.path.join(args.coq_gym_root, "tactics.ebnf"))
-    setattr(args, "sexp_cache",     os.path.join(args.coq_gym_root, "sexp_cache"))
+    setattr(args, "raw_root",       os.path.join(args.base_root, "raw"))
+    setattr(args, "stage1_root",    os.path.join(args.base_root, "stage1"))
+    setattr(args, "data_root",      os.path.join(args.raw_root, "data"))
+    setattr(args, "splits_file",    os.path.join(args.raw_root, "projs_split.json"))
+    setattr(args, "tactic_grammar", os.path.join(args.raw_root, "tactics.ebnf"))
+    setattr(args, "sexp_cache",     os.path.join(args.raw_root, "sexp_cache"))
 
     proof_files = glob(f"{args.data_root}/**/*.json", recursive=True)
     with mp.Pool(args.threads, initializer=init_process, initargs=[args]) as pool:
         pool.starmap(process_file, zip(itertools.repeat(args), proof_files))
 
-    print(f"Output saved to {args.output}")
+    print(f"Output saved to {args.stage1_root}")

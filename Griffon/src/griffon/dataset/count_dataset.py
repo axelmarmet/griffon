@@ -5,6 +5,8 @@ from typing import Tuple
 
 import numpy as np
 
+import pytorch_lightning as pl
+
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
@@ -39,15 +41,13 @@ class CounTDataset(Dataset[CounTBatch]):
 
         self.pad_id = self.vocab[PAD_TOKEN]
 
-    def to_dataloader(self, batch_size:int, sampler:Optional[Sampler]=None):
+    def to_dataloader(self, batch_size:int, num_workers:int):
         return DataLoader(
             self,
             batch_size=batch_size,
-            sampler=sampler,
-            shuffle=sampler is None,
             collate_fn=self.collate_fn, # type: ignore
             pin_memory=True,
-            num_workers=4)
+            num_workers=num_workers)
 
     def __getitem__(self, index:int)->CounTSample:
         sample:CounTSample = pickle.load(open(self.files[index], "rb"))
@@ -106,3 +106,34 @@ class CounTDataset(Dataset[CounTBatch]):
             input_padding_mask = input_padding_mask,
         )
         return CounTBatch(input_batch, target_ids)
+
+class CounTDataModule(pl.LightningDataModule):
+
+    def __init__(self, count_root:str, batch_size:int, num_workers:int=4):
+        super().__init__()
+        self.count_root = count_root
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+
+    def prepare_data(self):
+        pass
+
+    def setup(self, stage:str):
+        assert stage in ['fit', 'validate', 'test', 'predict']
+        if stage == 'fit':
+            self.train_split = CounTDataset(self.count_root, "train")
+            self.valid_split = CounTDataset(self.count_root, "valid")
+        elif stage == 'validate':
+            self.valid_split = CounTDataset(self.count_root, "valid")
+        elif stage == 'test':
+            self.test_split = CounTDataset(self.count_root, "test")
+
+    def train_dataloader(self):
+        return self.train_split.to_dataloader(self.batch_size, self.num_workers)
+    def val_dataloader(self):
+        return self.valid_split.to_dataloader(self.batch_size, self.num_workers)
+    def test_dataloader(self):
+        return self.test_split.to_dataloader(self.batch_size, self.num_workers)
+
+    def teardown(self):
+        pass

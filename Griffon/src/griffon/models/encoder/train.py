@@ -20,7 +20,7 @@ from griffon.coq_dataclasses import CounTBatch
 from griffon.dataset.count_dataset import CounTDataset
 from griffon.dataset.semantic_testcase_dataset import SemanticTestCaseDataset, SemanticTestCases
 from griffon.metrics import top_k_metric
-from griffon.models.scheduled_optimizer import ScheduledOptim
+from griffon.models.cosine_warmup_scheduler import CosineWarmupScheduler
 
 from tqdm import tqdm
 
@@ -145,77 +145,3 @@ def train(model,
                 })
 
     return best_model
-
-@torch.no_grad()
-def semantic_test(dataloader:DataLoader[SemanticTestCases], model, args:Namespace, verbose:bool):
-
-    model.eval()
-
-    results = []
-    for test_case in tqdm(dataloader, disable=not verbose):
-
-        inp, tgt_ids = test_case.batch
-
-        inp.to(args.device)
-        tgt_ids = tgt_ids.to(args.device)
-
-        predictions:Tensor = model.forward(inp, predict=True).detach()
-
-        if verbose:
-            itos = model.vocab.get_itos()
-            for pred, targets, name, orig_s, masked_s in zip(predictions,
-                                                            tgt_ids, test_case.names,
-                                                            test_case.original_sentences,
-                                                            test_case.masked_sentences):
-                mask = targets != TGT_IGNORE_INDEX
-                pred = torch.argmax(pred[mask], dim=-1)
-                targets = targets[mask]
-                assert pred.shape == targets.shape
-
-                correctly_classified = torch.count_nonzero(pred == targets)
-
-                print(f"{name} [{correctly_classified}/{pred.shape[0]}]")
-                print(f"original : {orig_s}")
-                print(f"masked   : {masked_s}")
-                print("------------------")
-                for i in range(pred.shape[0]):
-                    print(f"expected : {itos[targets[i]]}")
-                    print(f"got : {itos[pred[i]]}")
-                print("------------------")
-
-        mask = tgt_ids != TGT_IGNORE_INDEX
-        res = top_k_metric(predictions.reshape(-1, len(model.vocab)), tgt_ids.reshape(-1), k=1)
-
-        results.append(res)
-
-    return {"semantic tests precision":  torch.cat(results).mean()}
-
-@torch.no_grad()
-def test(dataloader:DataLoader[CounTBatch], model, args:Namespace, verbose:bool, ignore_pad_idx:bool=False, pad_idx = -1):
-
-    k = 3
-    assert not (ignore_pad_idx and pad_idx == -1), \
-        "give a correct value to pad_idx if you want to ignore it"
-
-    model.eval()
-
-    results = []
-    for inp, tgt_ids in tqdm(dataloader, disable=not verbose):
-
-        inp.to(args.device)
-        tgt_ids = tgt_ids.to(args.device)
-
-        pred:Tensor = model.forward(inp, predict=True).detach()
-        vocab_len = pred.shape[-1]
-
-        res = top_k_metric(pred.reshape(-1, vocab_len), tgt_ids.reshape(-1), k=k)
-
-        results.append(res)
-
-    mean = torch.cat(results).mean()
-
-    if args.distributed:
-            dist.reduce(mean, 0, dist.ReduceOp.SUM)
-            mean = mean / args.world_size
-
-    return {f"top {k} accuracy":mean}

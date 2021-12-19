@@ -3,6 +3,7 @@ from argparse import Namespace
 
 import os
 import pickle
+from griffon.preprocessing.stage2.build_vocab import build_vocab
 
 from griffon.utils import load_config
 from griffon.coq_dataclasses import Stage1Sample
@@ -132,13 +133,7 @@ if __name__ == "__main__":
         """
     )
     arg_parser.add_argument(
-        "--stage1_root", type=str, default="data/processed/stage1", help="The root folder of the stage 1 preprocessed data"
-    )
-    arg_parser.add_argument(
-        "--stage2_root", type=str, default="data/processed/stage2", help="The desired root folder of the stage 2 preprocessed data"
-    )
-    arg_parser.add_argument(
-        "--vocab_path", type=str, default="models/vocab.pickle", help="The path to the pickled torchtext vocab"
+        "--base_root", type=str, required=True, help="the path to the root of the base data"
     )
     arg_parser.add_argument(
         "--config_path", type=str, default="configs/config.json", help="The path to the config file"
@@ -148,8 +143,17 @@ if __name__ == "__main__":
         The number of threads used for preprocessing (default: use all threads available)
         """
     )
-
     args = arg_parser.parse_args()
+    setattr(args, "stage1_root", os.path.join(args.base_root, "stage1"))
+    setattr(args, "stage2_root", os.path.join(args.base_root, "stage2"))
+    setattr(args, "vocab_path", os.path.join(args.stage2_root, "vocab.pkl"))
+
+    print("Building vocab")
+    build_vocab(args.stage1_root, args.vocab_path)
+
+    # store the config in the stage 2 directory too
+    shutil.copy(args.config_path, os.path.join(args.stage2_root, "distance_transformer.json"))
+
     project_pattern = os.path.join(args.stage1_root, "**", "*")
     projects = glob(project_pattern)
 
