@@ -12,7 +12,7 @@ fit:
     num_nodes: 1
     num_processes: 1
     devices: null
-    gpus: null
+    gpus: 1
     auto_select_gpus: false
     tpu_cores: null
     ipus: null
