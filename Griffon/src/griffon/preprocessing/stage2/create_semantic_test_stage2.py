@@ -8,6 +8,7 @@ from shutil import copyfile
 
 
 from argparse import Namespace
+import shutil
 from typing import Dict, List
 from griffon.constants import MASK_TOKEN
 
@@ -89,3 +90,8 @@ if __name__ == "__main__":
             statements, vocab_transformer, distances_transformer)
 
         pickle.dump(stage_2_statements, open(os.path.join(output_dir, f"{filename}.pkl"), "wb"))
+
+    shutil.copy(
+        args.vocab,
+        os.path.join(args.semantic_tests_root, f"vocab.pkl")
+    )

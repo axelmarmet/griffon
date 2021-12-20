@@ -24,7 +24,7 @@ fit:
     check_val_every_n_epoch: 1
     fast_dev_run: false
     accumulate_grad_batches: null
-    max_epochs: 5
+    max_epochs: 15
     min_epochs: null
     max_steps: -1
     min_steps: null
@@ -66,16 +66,16 @@ fit:
     config:
       architecture:
         vocab_file: data/small/data/base/stage2/vocab.pkl
-        subtoken_embedding_dim: 128
+        subtoken_embedding_dim: 512
         num_subtokens: 5
-        token_embedding_dim: 256
+        token_embedding_dim: 1024
         scale_token_embeddings: false
         activation_fn: tanh
         code_transformer:
           num_layers: 1
           encoder_layer :
             nhead: 8
-            dim_feedforward: 256
+            dim_feedforward: 2048
             num_relative_distances: 4
           norm:
             type: layer_norm
@@ -83,9 +83,9 @@ fit:
       optimizer:
         lr: 0.1
         warmup_steps: 4000
-        max_iters: 10000
+        max_iters: 100000
   data:
-    data_root: data/small/data
+    data_root: /root/scratch/small/data
     batch_size: 32
     num_workers: 4
 

@@ -180,6 +180,12 @@ def process_file(args:Namespace, proof_path:str):
                         local_context = [hypothesis for hypothesis in local_context if len(hypothesis.tokens) <= 128]
 
                         sample = Stage1Sample(local_context, goal, lemma)
+
+                        # validate a bit
+                        for hypo in sample.hypotheses:
+                            assert isinstance(hypo.token_to_node, list)
+                        assert isinstance(sample.goal.token_to_node, list)
+
                         out_filename = 'proof{:04d}.pickle'.format(proof_index)
                         proof_index += 1
                         path = os.path.join(out_dirpath, out_filename)

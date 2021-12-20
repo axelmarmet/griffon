@@ -4,6 +4,7 @@ import pickle
 from numpy import sqrt
 
 import pytorch_lightning as pl
+from pytorch_lightning.loggers.wandb import WandbLogger
 
 import torch
 import torch.nn as nn
@@ -29,6 +30,7 @@ from griffon.models.encoder.code_transformer import CodeTransformer
 from griffon.coq_dataclasses import CounTBatch, CounTInput
 from griffon.models.encoder.standard_transformer import Seq2SeqEncoder
 from griffon.models.encoder.train import train
+from griffon.preprocessing.stage2.vocab import AbstractVocab
 from griffon.utils import cleanup, set_seed, setup
 
 def _get_activation_fn(activation:str)->Callable[[Tensor],Tensor]:
@@ -60,7 +62,7 @@ class CounT(pl.LightningModule):
         self.num_subtokens = architecture_config["num_subtokens"]
         self.d_model = architecture_config["token_embedding_dim"]
 
-        self.vocab = pickle.load(open(architecture_config["vocab_file"], "rb"))
+        self.vocab:AbstractVocab = pickle.load(open(architecture_config["vocab_file"], "rb"))
 
         self.scale_token_embeddings = architecture_config["scale_token_embeddings"]
 
@@ -103,13 +105,14 @@ class CounT(pl.LightningModule):
     def training_step(self, batch:CounTBatch, batch_idx):
         inp:CounTInput
         tgt_ids:Tensor
-        inp, tgt_ids = batch # type:ignore
+        inp, tgt_ids = batch.as_tuple()
         preds = self.forward(inp) @ self.embedding.weight.T
 
         len_vocab = preds.shape[-1]
         log_probs = F.log_softmax(preds, -1).view(-1, len_vocab)
-        loss = F.nll_loss(log_probs, tgt_ids.view(-1, len_vocab), ignore_index=TGT_IGNORE_INDEX)
+        loss = F.nll_loss(log_probs, tgt_ids.view(-1), ignore_index=TGT_IGNORE_INDEX)
 
+        self.log("training loss", loss, on_step=False, on_epoch=True)
         return loss
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
@@ -117,6 +120,14 @@ class CounT(pl.LightningModule):
         def semantic_validation_step(test_cases:SemanticTestCases):
             inp, tgt_ids = test_cases.batch.as_tuple()
             predictions:Tensor = self.forward(inp) @ self.embedding.weight.T
+
+            itos = self.vocab.get_itos()
+
+            verbose_columns = ["Statement Name", "Masked Statement", "Expected", "Predicted"]
+            verbose_data = []
+
+            summary_columns = ["Statement Name", "Ratio"]
+            summary_data = []
 
             for pred, targets, name, orig_s, masked_s in zip(predictions,
                                                             tgt_ids, test_cases.names,
@@ -128,21 +139,22 @@ class CounT(pl.LightningModule):
                 assert pred.shape == targets.shape
 
                 correctly_classified = torch.count_nonzero(pred == targets)
-                self.log(f"semantic test cases : {name}", correctly_classified / pred.shape[0])
 
-                # need to handle vocab from data gracefully
+                summary_data.append([name, f"{correctly_classified}/{pred.shape[0]}"])
+                for i in range(pred.shape[0]):
+                    verbose_data.append([name, masked_s, itos[targets[i]], itos[pred[i]]])
 
-                # print(f"{name} [{correctly_classified}/{pred.shape[0]}]")
-                # print(f"original : {orig_s}")
-                # print(f"masked   : {masked_s}")
-                # print("------------------")
-                # for i in range(pred.shape[0]):
-                #     print(f"expected : {itos[targets[i]]}")
-                #     print(f"got : {itos[pred[i]]}")
-                # print("------------------")
 
             res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=1).mean()
-            self.log("semantic test cases", res)
+
+            self.log("semantic test cases", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
+            assert isinstance(self.logger, WandbLogger)
+            self.logger.log_text(key="verbose semantic tests",
+                                 columns = verbose_columns,
+                                 data = verbose_data)
+            self.logger.log_text(key="summary semantic tests",
+                                 columns = summary_columns,
+                                 data = summary_data)
 
         def mlm_validation_step(batch:CounTBatch):
             K = 3
@@ -151,36 +163,31 @@ class CounT(pl.LightningModule):
 
             predictions = self.forward(inp) @ self.embedding.weight.T
             res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=K).mean()
-            self.log(f"validation top {K}", res)
+            self.log(f"validation top {K}", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
 
         assert dataloader_idx < 2, f"Unexpected index {dataloader_idx}"
 
         if dataloader_idx == 0:
-            assert isinstance(batch, SemanticTestCases)
-            semantic_validation_step(batch)
-        else:
             assert isinstance(batch, CounTBatch)
             mlm_validation_step(batch)
+        else:
+            assert isinstance(batch, SemanticTestCases)
+            semantic_validation_step(batch)
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=self.hparams.lr) #type: ignore
+        optimizer = optim.Adam(self.parameters(), lr=self.hparams["optimizer"]["lr"]) #type: ignore
 
         # We don't return the lr scheduler because we need to apply it per iteration, not per epoch
         self.lr_scheduler = CosineWarmupScheduler(
-            optimizer, warmup=self.hparams.warmup_steps, max_iters=self.hparams.max_iters #type:ignore
+            optimizer,
+            warmup=self.hparams["optimizer"]["warmup_steps"],
+            max_iters=self.hparams["optimizer"]["max_iters"] #type:ignore
         )
         return optimizer
 
     def optimizer_step(self, *args, **kwargs):
         super().optimizer_step(*args, **kwargs)
         self.lr_scheduler.step()
-
-
-
-def main(hparams):
-    model = CounT()
-    trainer = Trainer(gpus=hparams.gpus)
-    trainer.fit(model)
 
 def run(args:argparse.Namespace, rank:int, world_size:int):
 
@@ -205,7 +212,7 @@ def run(args:argparse.Namespace, rank:int, world_size:int):
     datasets["valid"] = CounTDataset(args.count_root, "valid")
     datasets["semantic_test"] = SemanticTestCaseDataset(args.semantic_tests_root)
 
-    model = CounT(datasets["train"].vocab, config["architecture"])
+    model = CounT(config["architecture"])
     model = model.to(args.device)
 
     if args.distributed:

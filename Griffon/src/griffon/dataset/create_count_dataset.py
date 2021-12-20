@@ -7,6 +7,8 @@ from glob import glob
 
 import torch
 
+import shutil
+
 from random import randint, random
 import numpy as np
 from tqdm import tqdm
@@ -118,3 +120,5 @@ if __name__ == '__main__':
     set_seed(0)
 
     create_from_stage2(args)
+    shutil.copy(os.path.join(args.stage2_root, "vocab.pkl"),
+                os.path.join(args.target_root, "vocab.pkl"))

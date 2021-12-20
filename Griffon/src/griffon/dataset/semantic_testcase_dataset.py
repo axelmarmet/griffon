@@ -7,6 +7,8 @@ import json
 
 import numpy as np
 
+import pytorch_lightning as pl
+
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
@@ -45,7 +47,7 @@ class SemanticTestCaseDataset(Dataset):
 
         sample_path = os.path.join(data_root, "stage2")
         mask_file = os.path.join(data_root, "masks.json")
-        vocab_path = os.path.join(data_root, "vocab.pickle")
+        vocab_path = os.path.join(data_root, "vocab.pkl")
 
         assert os.path.exists(sample_path), f"Path {sample_path} does not exist"
         assert os.path.exists(mask_file), f"Path {mask_file} does not exist"
@@ -108,7 +110,7 @@ class SemanticTestCaseDataset(Dataset):
         count_samples:List[CounTSample] = []
         sentence_names = []
         original_sentences = []
-        masked_sentences = []
+        masked_sentences:List[str] = []
 
         for statement in statements:
             original_sentence = str(statement)
@@ -116,7 +118,7 @@ class SemanticTestCaseDataset(Dataset):
             count_samples.append(self.transform_to_count_sample(statement, masked_sentence))
             sentence_names.append(statement.name)
             original_sentences.append(original_sentence)
-            masked_sentences.append(masked_sentence)
+            masked_sentences.append(" ".join(masked_sentence))
 
         count_batch = CounTDataset.collate_fn([sample for sample in count_samples])
         return SemanticTestCases(
@@ -130,3 +132,27 @@ class SemanticTestCaseDataset(Dataset):
     def __len__(self) -> int:
         return len(self.files)
 
+class SemanticTestDataModule(pl.LightningDataModule):
+
+    def __init__(self, data_root:str):
+        super().__init__()
+        self.data_root = data_root
+
+    def prepare_data(self):
+        pass
+
+    def setup(self, stage:str):
+        assert stage == 'validate'
+        self.dataset = SemanticTestCaseDataset(self.data_root)
+
+    def train_dataloader(self):
+        raise NotImplementedError()
+
+    def val_dataloader(self):
+        return self.dataset.to_dataloader()
+
+    def test_dataloader(self):
+        raise NotImplementedError()
+
+    def teardown(self):
+        pass

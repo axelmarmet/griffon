@@ -1,6 +1,7 @@
 data
 wandb
 secrets
+lightning_logs
 
 models/*.pickle
 
