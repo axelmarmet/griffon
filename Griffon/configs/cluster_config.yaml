@@ -65,7 +65,7 @@ fit:
   model:
     config:
       architecture:
-        vocab_file: data/small/data/base/stage2/vocab.pkl
+        vocab_file: /root/scratch/data/base/stage2/vocab.pkl
         subtoken_embedding_dim: 512
         num_subtokens: 5
         token_embedding_dim: 1024
@@ -85,7 +85,7 @@ fit:
         warmup_steps: 4000
         max_iters: 100000
   data:
-    data_root: /root/scratch/small/data
+    data_root: /root/scratch/data
     batch_size: 32
     num_workers: 4
 
