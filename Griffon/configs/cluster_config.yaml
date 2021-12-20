@@ -86,7 +86,7 @@ fit:
         max_iters: 100000
   data:
     data_root: /root/scratch/griffon/data
-    batch_size: 32
+    batch_size: 128
     num_workers: 4
 
   ckpt_path: null
