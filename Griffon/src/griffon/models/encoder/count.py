@@ -29,7 +29,6 @@ from griffon.models.encoder.code_transformer import CodeTransformer
 
 from griffon.coq_dataclasses import CounTBatch, CounTInput
 from griffon.models.encoder.standard_transformer import Seq2SeqEncoder
-from griffon.models.encoder.train import train
 from griffon.preprocessing.stage2.vocab import AbstractVocab
 from griffon.utils import cleanup, set_seed, setup
 
@@ -48,7 +47,7 @@ def _get_activation_fn(activation:str)->Callable[[Tensor],Tensor]:
 
 class CounT(pl.LightningModule):
 
-    def __init__(self, config:Dict[str,Any], learning_rate):
+    def __init__(self, config:Dict[str,Any], learning_rate:float=1.e-4):
         super(CounT, self).__init__()
         self.save_hyperparameters(config)
         self.learning_rate = learning_rate
@@ -67,7 +66,15 @@ class CounT(pl.LightningModule):
 
         self.scale_token_embeddings = architecture_config["scale_token_embeddings"]
 
-        self.embedding = nn.Embedding(len(self.vocab), self.subtoken_embedding_dim)
+        if architecture_config["pretrained_embeddings_path"]:
+            embedding_tensor:Tensor = pickle.load(
+                open(architecture_config["pretrained_embeddings_path"], "rb"))
+
+            assert embedding_tensor.shape[0] == len(self.vocab)
+            assert embedding_tensor.shape[1] == self.subtoken_embedding_dim
+            self.embedding = nn.Embedding.from_pretrained(embedding_tensor)
+        else:
+            self.embedding = nn.Embedding(len(self.vocab), self.subtoken_embedding_dim)
 
         self.token_encoder = nn.Linear(self.num_subtokens * self.subtoken_embedding_dim, self.d_model)
         self.token_decoder = nn.Linear(self.d_model, self.num_subtokens * self.subtoken_embedding_dim)
@@ -149,13 +156,13 @@ class CounT(pl.LightningModule):
             res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=1).mean()
 
             self.log("semantic test cases", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
-            assert isinstance(self.logger, WandbLogger)
-            self.logger.log_text(key="verbose semantic tests",
-                                 columns = verbose_columns,
-                                 data = verbose_data)
-            self.logger.log_text(key="summary semantic tests",
-                                 columns = summary_columns,
-                                 data = summary_data)
+            if isinstance(self.logger, WandbLogger):
+                self.logger.log_text(key="verbose semantic tests",
+                                        columns = verbose_columns,
+                                        data = verbose_data)
+                self.logger.log_text(key="summary semantic tests",
+                                        columns = summary_columns,
+                                        data = summary_data)
 
         def mlm_validation_step(batch:CounTBatch):
             K = 3
@@ -176,7 +183,12 @@ class CounT(pl.LightningModule):
             semantic_validation_step(batch)
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=self.learning_rate) #type: ignore
+        all_params_but_embedding = (param for name, param in self.named_parameters() if not name.startswith("embedding"))
+
+        optimizer = optim.Adam([
+            {"params": all_params_but_embedding},
+            {"params": self.embedding.parameters(), 'lr': (self.learning_rate or 1e-3) /10 }
+        ], lr=self.learning_rate or 1e-3) #type: ignore
 
         # We don't return the lr scheduler because we need to apply it per iteration, not per epoch
         self.lr_scheduler = CosineWarmupScheduler(
@@ -189,92 +201,3 @@ class CounT(pl.LightningModule):
     def optimizer_step(self, *args, **kwargs):
         super().optimizer_step(*args, **kwargs)
         self.lr_scheduler.step()
-
-def run(args:argparse.Namespace, rank:int, world_size:int):
-
-    if args.distributed:
-        setup(rank, world_size)
-
-    assert os.path.exists(args.config), f"file {args.config} does not exist"
-
-    args.world_size = world_size
-    args.rank = rank
-    args.is_main = rank == 0
-    if args.distributed:
-        torch.cuda.device(args.rank)
-        args.device = rank
-
-    config = json.load(open(args.config, "r"))
-    set_seed(config["seed"])
-
-    # get the dataset
-    datasets = {}
-    datasets["train"] = CounTDataset(args.count_root, "train")
-    datasets["valid"] = CounTDataset(args.count_root, "valid")
-    datasets["semantic_test"] = SemanticTestCaseDataset(args.semantic_tests_root)
-
-    model = CounT(config["architecture"])
-    model = model.to(args.device)
-
-    if args.distributed:
-        model = DDP(
-            model,
-            device_ids=[args.rank],
-            output_device=args.rank
-        )
-
-    best_model = train(model, datasets, config, args)
-
-    if args.is_main:
-        filename = os.path.join(args.save_dir, "best_model")
-        torch.save(best_model.state_dict(), filename)
-
-    if args.distributed:
-        cleanup()
-
-
-if __name__ == "__main__":
-
-    arg_parser = argparse.ArgumentParser(
-        description="""
-            Train CounT
-        """
-    )
-    arg_parser.add_argument(
-        "--data_root", type=str, default="data", help="The root directory of the dataset"
-    )
-    arg_parser.add_argument(
-        "--config", type=str, required=True, help="The config file that contains all hyperparameters"
-    )
-    arg_parser.add_argument(
-        "--gpus", type=int, default=0, help="The number of gpus"
-    )
-    arg_parser.add_argument(
-        "--save_dir", required=True
-    )
-    arg_parser.add_argument('--use_wandb', dest='use_wandb', action='store_true')
-
-    args = arg_parser.parse_args()
-    setattr(args, "count_root", os.path.join(args.data_root, "CounT"))
-    setattr(args, "semantic_tests_root", os.path.join(args.data_root, "semantic_tests"))
-
-
-    if args.distributed:
-        # check how many GPUs are available
-        size = torch.cuda.device_count()
-
-        # spawn that many processes
-        processes = []
-        mp.set_start_method("spawn")
-        for rank in range(size):
-            p = mp.Process(target=run, args=(args, rank, size))
-            p.start()
-            processes.append(p)
-
-        # wait for all processes to be done to finish
-        for p in processes:
-            p.join()
-    else:
-        run(args, 0, 1)
-
-
