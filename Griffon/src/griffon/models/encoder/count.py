@@ -48,9 +48,10 @@ def _get_activation_fn(activation:str)->Callable[[Tensor],Tensor]:
 
 class CounT(pl.LightningModule):
 
-    def __init__(self, config:Dict[str,Any]):
+    def __init__(self, config:Dict[str,Any], learning_rate):
         super(CounT, self).__init__()
         self.save_hyperparameters(config)
+        self.learning_rate = learning_rate
 
         architecture_config = config["architecture"]
 
@@ -175,7 +176,7 @@ class CounT(pl.LightningModule):
             semantic_validation_step(batch)
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=self.hparams["optimizer"]["lr"]) #type: ignore
+        optimizer = optim.Adam(self.parameters(), lr=self.learning_rate) #type: ignore
 
         # We don't return the lr scheduler because we need to apply it per iteration, not per epoch
         self.lr_scheduler = CosineWarmupScheduler(

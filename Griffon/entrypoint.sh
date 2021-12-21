@@ -15,11 +15,10 @@ git clone https://github.com/axelmarmet/CoqGym.git
 git clone https://github.com/axelmarmet/griffon.git
 (
     cd griffon/Griffon
+    git checkout lightning
     pip install -e .
 )
 
 cd griffon/Griffon
 
-if [[ -z "${TRAIN_CMD}" ]]; then
-    eval $TRAIN_CMD
-fi
+eval $TRAIN_CMD
