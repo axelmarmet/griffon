@@ -88,6 +88,6 @@ fit:
   data:
     data_root: /root/scratch/griffon/data
     batch_size: 128
-    num_workers: 4
+    num_workers: 16
 
   ckpt_path: null
