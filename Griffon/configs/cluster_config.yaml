@@ -73,7 +73,7 @@ fit:
         scale_token_embeddings: false
         activation_fn: tanh
         code_transformer:
-          num_layers: 1
+          num_layers: 4
           encoder_layer :
             nhead: 8
             dim_feedforward: 2048
