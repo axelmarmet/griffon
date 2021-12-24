@@ -12,7 +12,7 @@ fit:
     num_nodes: 1
     num_processes: 1
     devices: null
-    gpus: 1
+    gpus: null
     auto_select_gpus: false
     tpu_cores: null
     ipus: null
@@ -24,7 +24,7 @@ fit:
     check_val_every_n_epoch: 1
     fast_dev_run: false
     accumulate_grad_batches: 4
-    max_epochs: 15
+    max_epochs: 5
     min_epochs: null
     max_steps: -1
     min_steps: null
@@ -50,7 +50,7 @@ fit:
     deterministic: false
     reload_dataloaders_every_n_epochs: 0
     reload_dataloaders_every_epoch: false
-    # auto_lr_find: true
+    auto_lr_find: false
     replace_sampler_ddp: true
     detect_anomaly: false
     auto_scale_batch_size: false
@@ -65,18 +65,18 @@ fit:
   model:
     config:
       architecture:
-        pretrained_embeddings_path: /root/scratch/griffon/data/base/stage2/embeddings.pkl
-        vocab_file: /root/scratch/griffon/data/base/stage2/vocab.pkl
-        subtoken_embedding_dim: 512
+        pretrained_embeddings_path: data/small/data/base/stage2/embeddings.pkl
+        vocab_file: data/small/data/base/stage2/vocab.pkl
+        subtoken_embedding_dim: 128
         num_subtokens: 5
-        token_embedding_dim: 1024
+        token_embedding_dim: 256
         scale_token_embeddings: false
         activation_fn: tanh
         code_transformer:
-          num_layers: 4
+          num_layers: 1
           encoder_layer :
             nhead: 8
-            dim_feedforward: 2048
+            dim_feedforward: 256
             num_relative_distances: 4
           norm:
             type: layer_norm
@@ -89,8 +89,8 @@ fit:
         warmup_steps: 4000
 
   data:
-    data_root: /root/scratch/griffon/data
-    batch_size: 128
-    num_workers: 16
+    data_root: data/small/data
+    batch_size: 32
+    num_workers: 4
 
   ckpt_path: null

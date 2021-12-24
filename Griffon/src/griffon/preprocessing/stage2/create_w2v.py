@@ -37,6 +37,9 @@ if __name__ == "__main__":
     arg_parser.add_argument(
         "--base_root", type=str, required=True, help="the path to the root of the base data"
     )
+    arg_parser.add_argument(
+        "--embedding_dim", type=int, required=True, help="The embedding dim"
+    )
     args = arg_parser.parse_args()
     setattr(args, "stage1_root", os.path.join(args.base_root, "stage1"))
     setattr(args, "stage2_root", os.path.join(args.base_root, "stage2"))
@@ -48,5 +51,5 @@ if __name__ == "__main__":
     vocab:AbstractVocab = pickle.load(open(args.vocab_path, "rb"))
     stage1_iter:Stage1Iterable = Stage1Iterable(train_root)
 
-    embedding_tensor = create_w2v_tensor(vocab, stage1_iter, 512)
+    embedding_tensor = create_w2v_tensor(vocab, stage1_iter, args.embedding_dim)
     pickle.dump(embedding_tensor, open(args.embeddings_path, "wb"))

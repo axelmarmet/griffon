@@ -5,6 +5,7 @@ from numpy import sqrt
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers.wandb import WandbLogger
+from pytorch_lightning.trainer.trainer import Trainer
 
 import torch
 import torch.nn as nn
@@ -17,12 +18,14 @@ from typing import Dict, Any, Callable, NamedTuple
 from torch import Tensor
 
 import json
+import math
 
 from torchtext.vocab import Vocab
 import wandb
 from griffon.constants import TGT_IGNORE_INDEX
 from griffon.dataset.count_dataset import CounTDataset
 from griffon.dataset.semantic_testcase_dataset import SemanticTestCaseDataset, SemanticTestCases
+from griffon.functional.focal_loss import focal_loss
 from griffon.metrics import top_k_metric
 from griffon.models.cosine_warmup_scheduler import CosineWarmupScheduler
 from griffon.models.encoder.code_transformer import CodeTransformer
@@ -117,9 +120,19 @@ class CounT(pl.LightningModule):
         preds = self.forward(inp) @ self.embedding.weight.T
 
         len_vocab = preds.shape[-1]
-        log_probs = F.log_softmax(preds, -1).view(-1, len_vocab)
-        loss = F.nll_loss(log_probs, tgt_ids.view(-1), ignore_index=TGT_IGNORE_INDEX)
-
+        if self.hparams["optimizer"]["loss_fn"]["type"] == "f_loss":
+            loss = focal_loss(
+                preds.view(-1, len_vocab),
+                tgt_ids.view(-1),
+                gamma=self.hparams["optimizer"]["loss_fn"]["gamma"],
+                ignore_index=TGT_IGNORE_INDEX
+            )
+        else:
+            loss = F.cross_entropy(
+                preds.view(-1, len_vocab),
+                tgt_ids.view(-1),
+                ignore_index=TGT_IGNORE_INDEX
+            )
         self.log("training loss", loss, on_step=False, on_epoch=True)
         return loss
 
@@ -183,6 +196,11 @@ class CounT(pl.LightningModule):
             semantic_validation_step(batch)
 
     def configure_optimizers(self):
+        assert isinstance(self.trainer, Trainer)
+        num_batches = self.trainer.datamodule.steps_per_epoch / self.trainer.accumulate_grad_batches #type: ignore
+        num_steps = math.ceil(num_batches * self.trainer.max_epochs)
+        print(f"Will run for {num_steps} steps")
+
         all_params_but_embedding = (param for name, param in self.named_parameters() if not name.startswith("embedding"))
 
         optimizer = optim.Adam([
@@ -194,7 +212,7 @@ class CounT(pl.LightningModule):
         self.lr_scheduler = CosineWarmupScheduler(
             optimizer,
             warmup=self.hparams["optimizer"]["warmup_steps"],
-            max_iters=self.hparams["optimizer"]["max_iters"] #type:ignore
+            max_iters=num_steps #type:ignore
         )
         return optimizer
 

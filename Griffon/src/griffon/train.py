@@ -15,10 +15,6 @@ wandb_logger = WandbLogger(project="griffon", save_dir=os.path.join("wandb", wan
 class MyLightningCLI(LightningCLI):
 
     def before_fit(self):
-        # print("hiii")
-        # print("-----------------")
-        # self.trainer.tune(self.model, datamodule=self.datamodule)
-        # print("done")
         assert isinstance(self.trainer, Trainer)
         # should only give the train dataloader
         self.trainer.tune(self.model, datamodule=self.datamodule)

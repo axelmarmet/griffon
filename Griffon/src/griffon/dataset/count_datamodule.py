@@ -2,6 +2,8 @@ import os
 from typing import Optional
 import pytorch_lightning as pl
 
+from math import ceil
+
 from griffon.dataset.count_dataset import CounTDataset
 from griffon.dataset.semantic_testcase_dataset import SemanticTestCaseDataset
 
@@ -25,6 +27,7 @@ class CounTDataModule(pl.LightningDataModule):
             self.train_split = CounTDataset(self.count_root, "train")
             self.count_valid_split = CounTDataset(self.count_root, "valid")
             self.semantic_valid_split = SemanticTestCaseDataset(self.semantic_root)
+            self.steps_per_epoch = ceil(len(self.train_split) / self.batch_size)
         elif stage == 'validate':
             self.count_valid_split = CounTDataset(self.count_root, "valid")
             self.semantic_valid_split = SemanticTestCaseDataset(self.semantic_root)
