@@ -5,7 +5,7 @@ fit:
     checkpoint_callback: null
     enable_checkpointing: true
     callbacks: null
-    default_root_dir: null
+    default_root_dir: /root/scratch/griffon/checkpoints
     gradient_clip_val: null
     gradient_clip_algorithm: null
     process_position: 0
@@ -24,7 +24,7 @@ fit:
     check_val_every_n_epoch: 1
     fast_dev_run: false
     accumulate_grad_batches: 4
-    max_epochs: 15
+    max_epochs: 30
     min_epochs: null
     max_steps: -1
     min_steps: null
