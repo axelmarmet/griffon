@@ -11,23 +11,20 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 
-from griffon.constants import MAX_NUM_TOKEN, NUM_SUB_TOKENS, PAD_TOKEN, UNK_TOKEN
+from griffon.constants import EOS_TOKEN, MAX_NUM_TOKEN, NUM_SUB_TOKENS, PAD_TOKEN, SOS_TOKEN, UNK_TOKEN
 from griffon.coq_dataclasses import CTCoqLemma, CTCoqSample, CTCoqStatement, Stage1Token, Stage2Sample, Stage2Statement, Stage2Token
 from griffon.utils import pad_list, pad_mask
 
 
 class CTCoqDataset(Dataset):
-    """
-    Unites common functionalities used across different datasets such as applying the token mapping to the
-    distance matrices and collating the matrices from multiple samples into one big tensor.
-    """
+
 
     def __init__(self, root_path:str, vocab_path:str):
 
         assert os.path.exists(root_path), f"Path {root_path} does not exist"
         assert os.path.exists(vocab_path), f"Path {vocab_path} does not exist"
 
-        self.files = glob(os.path.join(root_path, "*.pickle"))
+        self.files = sorted(glob(os.path.join(root_path, "*.pickle")))
         self.vocab = pickle.load(open(vocab_path, "rb"))
 
         self.unk_id = self.vocab[UNK_TOKEN]
@@ -43,7 +40,6 @@ class CTCoqDataset(Dataset):
         sample:Stage2Sample = pickle.load(open(self.files[index], "rb"))
         return self.transform_sample(sample)
 
-
     def transform_statement(self, statement: Stage2Statement,
                             extended_vocab:Dict[str,int])->CTCoqStatement:
 
@@ -55,11 +51,9 @@ class CTCoqDataset(Dataset):
         # Generating extended vocabulary for pointer network. The extended vocabulary essentially mimics an infinite
         # vocabulary size for this sample
         len_vocab = len(self.vocab)
-        for idx_token, token in enumerate(statement.tokens):
-            for idx_subtoken, subtoken in enumerate(token.subtokens):
+        for token in statement.tokens:
+            for subtoken, original_subtoken in zip(token.subtokens, token.original_subtokens):
                 if subtoken == self.unk_id:
-                    original_subtoken = token.original_subtokens[idx_subtoken]
-
                     if original_subtoken in extended_vocab:
                         extended_id = extended_vocab[original_subtoken]
                     else:
@@ -78,6 +72,9 @@ class CTCoqDataset(Dataset):
 
     def transform_lemma(self, lemma : List[Stage1Token], extended_vocab:Dict[str,int])->CTCoqLemma:
 
+        def get_filled_token(token:str)->Stage2Token:
+            return Stage2Token([self.vocab[token]] * NUM_SUB_TOKENS, [token] * NUM_SUB_TOKENS)
+
         def transform_lemma_token(token : Stage1Token)->Stage2Token:
             new_subtokens = []
             for subtoken in token.subtokens:
@@ -90,11 +87,15 @@ class CTCoqDataset(Dataset):
                         new_subtokens.append(self.unk_id)
             return Stage2Token(new_subtokens, token.subtokens)
 
+        tokens = [get_filled_token(SOS_TOKEN)] + \
+                 [transform_lemma_token(token) for token in lemma] + \
+                 [get_filled_token(EOS_TOKEN)]
+
         seq = torch.tensor(
             [pad_list(
-                transform_lemma_token(token).subtokens,
+                token.subtokens,
                 self.num_sub_tokens,
-                self.pad_id) for token in lemma])
+                self.pad_id) for token in tokens])
 
         return CTCoqLemma(seq)
 

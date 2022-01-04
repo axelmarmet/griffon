@@ -128,7 +128,7 @@ class CounTSample:
     target_ids              : Tensor    # shape `number tokens x number_subtokens`
 
 @dataclass
-class CounTInput:
+class CounTBatchInput:
     input_ids               : Tensor    # shape `batch x max number tokens x number_subtokens`
     distance_indices        : Tensor    # shape `batch x number distances x max number tokens x max number_tokens`
     distance_bins           : Tensor    # shape `batch x number distances x number bins`
@@ -150,7 +150,7 @@ class CounTInput:
 
 @dataclass
 class CounTBatch:
-    input: CounTInput
+    input: CounTBatchInput
     target: Tensor # shape `batch x max_number_tokens x num_subtokens`
 
     def to(self, *args):

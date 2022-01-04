@@ -81,5 +81,6 @@ class VocabTransform:
 
         sample.goal = self.process_statement(sample.goal)
 
-        # we intentionnaly do not process the lemma used
+        # we intentionnaly do not process the lemma used as it is done in
+        # the ct_coq dataset class
         return sample
