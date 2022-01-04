@@ -105,6 +105,10 @@ class CTCoqSample:
         assert (all(subtokens[0] == st for st in subtokens)), "Not all tensors have the same number of subtokens"
         assert (all(distances[0] == d for d in distances)), "Not all tensors have the same number of distances"
 
+@dataclass
+class CTCoqOutput:
+    ...
+
 # @dataclass
 # class CTCoqBatch:
 #     sequences               : Tensor # shape `max_number_statements x max_number_tokens x max_subtokens`

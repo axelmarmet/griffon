@@ -30,7 +30,7 @@ from griffon.metrics import top_k_metric
 from griffon.models.cosine_warmup_scheduler import CosineWarmupScheduler
 from griffon.models.encoder.code_transformer import CodeTransformer
 
-from griffon.coq_dataclasses import CounTBatch, CounTInput
+from griffon.coq_dataclasses import CounTBatch, CounTBatchInput
 from griffon.models.encoder.standard_transformer import Seq2SeqEncoder
 from griffon.preprocessing.stage2.vocab import AbstractVocab
 from griffon.utils import cleanup, set_seed, setup
@@ -85,7 +85,7 @@ class CounT(pl.LightningModule):
 
         self.encoder = CodeTransformer(architecture_config["code_transformer"])
 
-    def forward(self, inp:CounTInput)->Tensor:
+    def forward(self, inp:CounTBatchInput)->Tensor:
 
         B, S = inp.input_ids.shape[:2]
 
@@ -114,7 +114,7 @@ class CounT(pl.LightningModule):
         return subtokens_embeddings
 
     def training_step(self, batch:CounTBatch, batch_idx):
-        inp:CounTInput
+        inp:CounTBatchInput
         tgt_ids:Tensor
         inp, tgt_ids = batch.as_tuple()
         preds = self.forward(inp) @ self.embedding.weight.T

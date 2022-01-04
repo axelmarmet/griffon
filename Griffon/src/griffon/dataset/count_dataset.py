@@ -99,7 +99,7 @@ class CounTDataset(Dataset[CounTBatch]):
         # to distinguish between a token padding and a subtoken padding
         input_padding_mask = torch.logical_not(pad_mask(torch.tensor(input_lengths), max_input_length).bool())
 
-        input_batch = CounTInput(
+        input_batch = CounTBatchInput(
             input_ids = input_ids,
             distance_indices = distance_indices,
             distance_bins = distance_bins,
