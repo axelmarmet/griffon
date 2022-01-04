@@ -1,6 +1,6 @@
 build:
-	python src/griffon/preprocessing/stage1/stage1.py --base_root=$(DATA_DIR)/base
-	python src/griffon/preprocessing/stage2/stage2.py --base_root=$(DATA_DIR)/base/ --config_path=configs/config.json
+	python src/griffon/preprocessing/stage1/stage1.py --base_root=$(DATA_DIR)/base --threads=$(THREADS)
+	python src/griffon/preprocessing/stage2/stage2.py --base_root=$(DATA_DIR)/base/ --config_path=configs/config.json --threads=$(THREADS)
 	python src/griffon/preprocessing/stage1/create_semantic_test_stage1.py --semantic_test_path=$(DATA_DIR)/semantic_tests
 	python src/griffon/preprocessing/stage2/create_semantic_test_stage2.py --data_root=$(DATA_DIR)/
 	python src/griffon/dataset/create_count_dataset.py --data_root=$(DATA_DIR)
