@@ -59,7 +59,7 @@ def create_from_stage2(args:Namespace):
                     statement.tokens[i] = create_random_token()
 
         target_ids = torch.tensor(
-            [pad_list(subtoken_ids, NUM_SUB_TOKENS, TGT_IGNORE_INDEX) for subtoken_ids in target_ids]
+            [pad_list(subtoken_ids, NUM_SUB_TOKENS, pad_id) for subtoken_ids in target_ids]
         )
         input_ids = torch.tensor(
             [pad_list(token.subtokens, NUM_SUB_TOKENS, pad_id) for token in

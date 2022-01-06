@@ -159,6 +159,8 @@ def process_file(args:Namespace, proof_path:str):
                     res = find_in_list(local_context, lambda x : x.name == action)
                     lemma = None
                     if res != None:
+                        # we don't want the network to just pluck the correct lemma from the hypotheses
+                        local_context.remove(res)
                         hypotheses = proof_data["goals"][str(goal_id)]['hypotheses']
                         hypothesis = find_in_list(hypotheses, lambda h : res.name in h['idents']) # type: ignore
                         assert hypothesis is not None

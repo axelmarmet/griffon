@@ -6,6 +6,7 @@ from numpy import sqrt
 import pytorch_lightning as pl
 from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning.trainer.trainer import Trainer
+from pytorch_lightning.utilities.cli import MODEL_REGISTRY
 
 import torch
 import torch.nn as nn
@@ -35,19 +36,19 @@ from griffon.models.encoder.standard_transformer import Seq2SeqEncoder
 from griffon.preprocessing.stage2.vocab import AbstractVocab
 from griffon.utils import cleanup, set_seed, setup
 
-def _get_activation_fn(activation:str)->Callable[[Tensor],Tensor]:
+def _get_activation_fn(activation:str)->nn.Module:
     if activation == "relu":
-        return F.relu
+        return nn.ReLU()
     elif activation == "gelu":
-        return F.gelu
+        return nn.GELU()
     elif activation == "tanh":
-        return torch.tanh
+        return nn.Tanh()
     elif activation == "sigmoid":
-        return F.sigmoid
+        return nn.Sigmoid()
     else:
         raise ValueError("unknown activation function")
 
-
+@MODEL_REGISTRY
 class CounT(pl.LightningModule):
 
     def __init__(self, config:Dict[str,Any], learning_rate:float=1.e-4):
@@ -75,15 +76,31 @@ class CounT(pl.LightningModule):
 
             assert embedding_tensor.shape[0] == len(self.vocab)
             assert embedding_tensor.shape[1] == self.subtoken_embedding_dim
-            self.embedding = nn.Embedding.from_pretrained(embedding_tensor)
+            self.embedding = nn.Embedding.from_pretrained(embedding_tensor) # type: nn.Embedding
         else:
             self.embedding = nn.Embedding(len(self.vocab), self.subtoken_embedding_dim)
 
-        self.token_encoder = nn.Linear(self.num_subtokens * self.subtoken_embedding_dim, self.d_model)
-        self.token_decoder = nn.Linear(self.d_model, self.num_subtokens * self.subtoken_embedding_dim)
-        self.activation_fn = _get_activation_fn(architecture_config["activation_fn"])
+        self.token_encoder = nn.Sequential(
+            nn.Linear(self.num_subtokens * self.subtoken_embedding_dim, self.num_subtokens * self.subtoken_embedding_dim),
+            nn.ReLU(),
+            nn.Linear(self.num_subtokens * self.subtoken_embedding_dim, self.d_model),
+            _get_activation_fn(architecture_config["activation_fn"])
+        )
+
+        self.token_decoder = nn.Sequential(
+            nn.Linear(self.d_model, self.num_subtokens * self.subtoken_embedding_dim),
+            nn.ReLU(),
+            nn.Linear(self.num_subtokens * self.subtoken_embedding_dim, self.num_subtokens * self.subtoken_embedding_dim),
+            _get_activation_fn(architecture_config["activation_fn"])
+        )
 
         self.encoder = CodeTransformer(architecture_config["code_transformer"])
+
+        self.predictor = nn.Sequential(
+            nn.Linear(self.subtoken_embedding_dim, self.subtoken_embedding_dim),
+            nn.ReLU(),
+            nn.Linear(self.subtoken_embedding_dim, len(self.vocab))
+        )
 
     def forward(self, inp:CounTBatchInput)->Tensor:
 
@@ -91,7 +108,6 @@ class CounT(pl.LightningModule):
 
         subtokens_embeddings = self.embedding.forward(inp.input_ids).view(B, S, -1)
         token_embeddings = self.token_encoder(subtokens_embeddings)
-        token_embeddings = self.activation_fn(token_embeddings)
 
         if self.scale_token_embeddings:
             token_embeddings *= sqrt(self.d_model)
@@ -109,15 +125,15 @@ class CounT(pl.LightningModule):
         assert token_embeddings.shape[2] == self.d_model
 
         subtokens_embeddings = self.token_decoder(token_embeddings).reshape(B, S, self.num_subtokens, self.subtoken_embedding_dim)
-        subtokens_embeddings = self.activation_fn(subtokens_embeddings)
+        predictions = self.predictor(subtokens_embeddings)
 
-        return subtokens_embeddings
+        return predictions
 
     def training_step(self, batch:CounTBatch, batch_idx):
         inp:CounTBatchInput
         tgt_ids:Tensor
         inp, tgt_ids = batch.as_tuple()
-        preds = self.forward(inp) @ self.embedding.weight.T
+        preds = self.forward(inp)
 
         len_vocab = preds.shape[-1]
         if self.hparams["optimizer"]["loss_fn"]["type"] == "f_loss":
@@ -140,7 +156,7 @@ class CounT(pl.LightningModule):
 
         def semantic_validation_step(test_cases:SemanticTestCases):
             inp, tgt_ids = test_cases.batch.as_tuple()
-            predictions:Tensor = self.forward(inp) @ self.embedding.weight.T
+            predictions:Tensor = self.forward(inp)
 
             itos = self.vocab.get_itos()
 
@@ -182,7 +198,7 @@ class CounT(pl.LightningModule):
 
             inp, tgt_ids = batch.as_tuple()
 
-            predictions = self.forward(inp) @ self.embedding.weight.T
+            predictions = self.forward(inp)
             res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=K).mean()
             self.log(f"validation top {K}", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
 

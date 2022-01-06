@@ -14,7 +14,7 @@ class SimpleMHA(nn.Module):
                 key:torch.Tensor)->torch.Tensor:
 
         S, B = key.shape[:2]
-        value = self.dummy_values.expand(S, B, 1)
+        value = self.dummy_values.expand(S, B, -1)
 
         return self.mha.forward(query, key, value)[1] #type:ignore
 
@@ -26,6 +26,6 @@ class SimpleMHA(nn.Module):
 
         return self.mha.forward(query=query.unsqueeze(1),
                                 key=key.unsqueeze(1),
-                                value=self.dummy_values.expand(S, 1, 1))[1].squeeze(0) #type:ignore
+                                value=self.dummy_values.expand(S, -1, -1))[1].squeeze(0) #type:ignore
 
 

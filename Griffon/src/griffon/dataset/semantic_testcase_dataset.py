@@ -1,28 +1,19 @@
 import os
 from glob import glob
 import pickle
-from typing import Tuple
 
 import json
 
-import numpy as np
-
-import pytorch_lightning as pl
 
 import torch
-import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
-import torch.nn.functional as F
-
-from random import randint, random
 
 from torch.utils.data.dataset import Dataset
-from torch.utils.data.sampler import Sampler
 
 from griffon.coq_dataclasses import *
 from griffon.dataset.count_dataset import CounTDataset
 from griffon.preprocessing.stage2.create_semantic_test_stage2 import verify_masks
-from griffon.utils import pad_mask, pad_list
+from griffon.utils import pad_list
 
 from griffon.constants import NUM_SUB_TOKENS, MASK_TOKEN, PAD_TOKEN, TGT_IGNORE_INDEX
 
@@ -131,28 +122,3 @@ class SemanticTestCaseDataset(Dataset):
 
     def __len__(self) -> int:
         return len(self.files)
-
-class SemanticTestDataModule(pl.LightningDataModule):
-
-    def __init__(self, data_root:str):
-        super().__init__()
-        self.data_root = data_root
-
-    def prepare_data(self):
-        pass
-
-    def setup(self, stage:str):
-        assert stage == 'validate'
-        self.dataset = SemanticTestCaseDataset(self.data_root)
-
-    def train_dataloader(self):
-        raise NotImplementedError()
-
-    def val_dataloader(self):
-        return self.dataset.to_dataloader()
-
-    def test_dataloader(self):
-        raise NotImplementedError()
-
-    def teardown(self):
-        pass

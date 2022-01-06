@@ -63,47 +63,67 @@ class Stage2Sample:
                                     # of ids, because we use an extended vocabulary
 
 @dataclass
-class CTCoqStatement:
+class GriffonStatement:
     tokens                  : Tensor    # shape `number tokens x number_subtokens`
-    extended_vocabulary_ids : List[int] # len `number of non pad subtokens`
+    extended_vocabulary_ids : List[List[int]] # shape `number tokens x number_subtokens`
     pointer_pad_mask        : Tensor    # shape `number tokens x number_subtokens`
     distances               : List[Distance]
 
 @dataclass
-class CTCoqLemma:
+class GriffonLemma:
     tokens : Tensor
 
 @dataclass
-class CTCoqSample:
+class GriffonSample:
     sequences               : Tensor # shape `number_statements x max_number_tokens x max_subtokens`
-    extended_vocabulary_ids : Tensor # shape `number_statements x max_len_subtokens_in_seq`
-    pointer_pad_mask        : Tensor # shape `number_statements x max_number_tokens x max_subtokens`
-    distances_index         : Tensor # shape `number_statements x number_distances x max_number_tokens x max_number_tokens`
+    extended_vocabulary_ids : Tensor # shape `number_statements x max_number_tokens x max_subtokens`
+    distances_indices         : Tensor # shape `number_statements x number_distances x max_number_tokens x max_number_tokens`
     distances_bins          : Tensor # shape `number_statements x number_distances x number_bins`
 
     # To only use actual info in all of the above tensors
-    padding_mask            : Tensor # shape `number_statements x max_number_tokens`
+    token_padding_mask      : Tensor # shape `number_statements x max_number_tokens`
+    pointer_pad_mask        : Tensor # shape `number_statements x max_number_tokens x max_subtokens`
 
     lemma                   : Tensor  # shape `number_tokens x max_subtokens`
     extended_vocabulary     : Dict[str,int]
 
     def validate(self):
         statements = [0,0,0,0,0,0]
-        tokens = [0,0,0,0,0]
-        subtokens = [0,0]
+        tokens = [0,0,0,0,0,0]
+        subtokens = [0,0,0]
         distances = [0,0]
 
         statements[0], tokens[0], subtokens[0] = self.sequences.shape
-        statements[1], _ = self.extended_vocabulary_ids.shape
-        statements[2], tokens[1], subtokens[1] = self.pointer_pad_mask.shape
-        statements[3], distances[0], tokens[2], tokens[3] = self.distances_index.shape
+        statements[1], tokens[1], subtokens[1] = self.extended_vocabulary_ids.shape
+        statements[2], tokens[2], subtokens[2] = self.pointer_pad_mask.shape
+        statements[3], distances[0], tokens[3], tokens[4] = self.distances_indices.shape
         statements[4], distances[1], _ = self.distances_bins.shape
-        statements[5], tokens[4] = self.padding_mask.shape
+        statements[5], tokens[5] = self.token_padding_mask.shape
 
         assert (all(statements[0] == s for s in statements)), "Not all tensors have the same number of statements"
         assert (all(tokens[0] == t for t in tokens)), "Not all tensors have the same number of tokens"
         assert (all(subtokens[0] == st for st in subtokens)), "Not all tensors have the same number of subtokens"
         assert (all(distances[0] == d for d in distances)), "Not all tensors have the same number of distances"
+
+    def pin_memory(self):
+        self.sequences = self.sequences.pin_memory()
+        self.extended_vocabulary_ids = self.extended_vocabulary_ids.pin_memory()
+        self.pointer_pad_mask = self.pointer_pad_mask.pin_memory()
+        self.distances_indices = self.distances_indices.pin_memory()
+        self.distances_bins = self.distances_bins.pin_memory()
+        self.token_padding_mask = self.token_padding_mask.pin_memory()
+        self.lemma = self.lemma.pin_memory()
+        return self
+
+    def to(self, *args):
+        self.sequences = self.sequences.to(*args)
+        self.extended_vocabulary_ids = self.extended_vocabulary_ids.to(*args)
+        self.pointer_pad_mask = self.pointer_pad_mask.to(*args)
+        self.distances_indices = self.distances_indices.to(*args)
+        self.distances_bins = self.distances_bins.to(*args)
+        self.token_padding_mask = self.token_padding_mask.to(*args)
+        self.lemma = self.lemma.to(*args)
+        return self
 
 @dataclass
 class CTCoqOutput:

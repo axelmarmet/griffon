@@ -1,6 +1,7 @@
 import os
 from typing import Optional
 import pytorch_lightning as pl
+from pytorch_lightning.utilities.cli import DATAMODULE_REGISTRY
 
 from math import ceil
 
@@ -8,6 +9,7 @@ from griffon.dataset.count_dataset import CounTDataset
 from griffon.dataset.semantic_testcase_dataset import SemanticTestCaseDataset
 
 
+@DATAMODULE_REGISTRY
 class CounTDataModule(pl.LightningDataModule):
 
     def __init__(self, data_root:str, batch_size:int, num_workers:int=4):
