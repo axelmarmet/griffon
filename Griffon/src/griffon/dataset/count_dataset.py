@@ -47,7 +47,8 @@ class CounTDataset(Dataset[CounTBatch]):
             batch_size=batch_size,
             collate_fn=self.collate_fn, # type: ignore
             pin_memory=True,
-            num_workers=num_workers)
+            num_workers=num_workers,
+            persistent_workers=True)
 
     def __getitem__(self, index:int)->CounTSample:
         sample:CounTSample = pickle.load(open(self.files[index], "rb"))

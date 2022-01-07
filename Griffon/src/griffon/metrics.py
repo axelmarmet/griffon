@@ -1,9 +1,10 @@
+from typing import Optional
 import torch
 from torch import Tensor
 from griffon.constants import TGT_IGNORE_INDEX
 
 
-def top_k_metric(preds:Tensor, tgt:Tensor, k:int=3):
+def top_k_metric(preds:Tensor, tgt:Tensor, pad_idx:Optional[int] = None, k:int=3):
 
     number_sub_tokens, len_vocab  = preds.shape
     number_sub_tokens_, = tgt.shape
@@ -11,6 +12,8 @@ def top_k_metric(preds:Tensor, tgt:Tensor, k:int=3):
     assert number_sub_tokens == number_sub_tokens_
 
     mask = tgt != TGT_IGNORE_INDEX
+    if pad_idx is not None:
+        mask = torch.logical_and(mask, tgt != pad_idx)
 
     preds = preds[mask]
     tgt = tgt[mask].unsqueeze(-1)

@@ -23,7 +23,7 @@ import math
 
 from torchtext.vocab import Vocab
 import wandb
-from griffon.constants import TGT_IGNORE_INDEX
+from griffon.constants import PAD_TOKEN, TGT_IGNORE_INDEX
 from griffon.dataset.count_dataset import CounTDataset
 from griffon.dataset.semantic_testcase_dataset import SemanticTestCaseDataset, SemanticTestCases
 from griffon.functional.focal_loss import focal_loss
@@ -199,7 +199,7 @@ class CounT(pl.LightningModule):
             inp, tgt_ids = batch.as_tuple()
 
             predictions = self.forward(inp)
-            res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=K).mean()
+            res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), pad_idx=self.vocab[PAD_TOKEN], k=K).mean()
             self.log(f"validation_top_3", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
 
         assert dataloader_idx < 2, f"Unexpected index {dataloader_idx}"
