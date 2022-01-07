@@ -126,6 +126,20 @@ class GriffonSample:
         return self
 
 @dataclass
+class GriffonBatch:
+    statements              : Tensor # shape `batch x max_number_statements x max_number_tokens x max_subtokens`
+    extended_vocabulary_ids : Tensor # shape `batch x number_statements x max_number_tokens x max_subtokens`
+    distances_indices       : Tensor # shape `batch x max_number_statements x number_distances x max_number_tokens x max_number_tokens`
+    distances_bins          : Tensor # shape `batch x max_number_statements x number_distances x number_bins`
+
+    # To only use actual info in all of the above tensors
+    token_padding_mask      : Tensor # shape `batch x number_statements x max_number_tokens`
+    pointer_pad_mask        : Tensor # shape `batch x number_statements x max_number_tokens x max_subtokens`
+
+    lemma                   : Tensor  # shape `batch x number_tokens x max_subtokens`
+    extended_vocabulary     : List[Dict[str,int]]
+
+@dataclass
 class CTCoqOutput:
     ...
 
