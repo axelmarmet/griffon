@@ -38,5 +38,6 @@ class MyLightningCLI(LightningCLI):
         self.trainer.tune(self.model, datamodule=self.datamodule)
         return
 
-MyLightningCLI()
+if __name__ == "__main__":
+    MyLightningCLI()
 

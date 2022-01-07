@@ -82,12 +82,16 @@ class SemanticTestCaseDataset(Dataset):
             target_ids = target_ids,
         )
 
+    def simple_collate_fn(self, samples:List[SemanticTestCases]):
+        assert len(samples) == 1
+        return samples[0]
+
     def to_dataloader(self):
         return DataLoader(
             self,
             batch_size=1,
             shuffle=False,
-            collate_fn=(lambda x: x[0]), # type: ignore
+            collate_fn=self.simple_collate_fn, # type: ignore
             pin_memory=True,
             num_workers=1)
 
