@@ -11,11 +11,11 @@ import wandb
 from griffon.models.encoder.count import CounT
 from griffon.dataset.count_datamodule import CounTDataModule
 import logging
-import flash.image
+# import flash.image
 from pytorch_lightning.utilities.cli import MODEL_REGISTRY, DATAMODULE_REGISTRY
 
-MODEL_REGISTRY.register_classes(flash.image, pl.LightningModule)
-print(MODEL_REGISTRY)
+# MODEL_REGISTRY.register_classes(flash.image, pl.LightningModule)
+# print(MODEL_REGISTRY)
 
 # wandb.init(project="griffon")
 # wandb_logger = WandbLogger(project="griffon", save_dir=os.path.join("wandb", wandb.run.name))
