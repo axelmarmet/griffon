@@ -1,18 +1,28 @@
 fit:
   seed_everything: null
   trainer:
-    # logger: true
+    logger:
+      class_path: pytorch_lightning.loggers.wandb.WandbLogger
+      init_args:
+        project: count
     checkpoint_callback: null
     enable_checkpointing: true
-    callbacks: null
-    default_root_dir: /root/scratch/griffon/checkpoints
+    callbacks:
+      - class_path: pytorch_lightning.callbacks.model_checkpoint.ModelCheckpoint
+        init_args:
+          monitor: semantic_test_cases
+          dirpath: /root/scratch/griffon/count/checkpoints
+          filename: sample-count-{epoch:02d}-{semantic_test_cases:.4f}-{validation_top_3:.3f}
+          save_top_k: 3
+          mode: max
+    default_root_dir: null
     gradient_clip_val: null
     gradient_clip_algorithm: null
     process_position: 0
     num_nodes: 1
     num_processes: 1
     devices: null
-    gpus: 1
+    gpus: 2
     auto_select_gpus: false
     tpu_cores: null
     ipus: null
@@ -24,7 +34,7 @@ fit:
     check_val_every_n_epoch: 1
     fast_dev_run: false
     accumulate_grad_batches: 4
-    max_epochs: 30
+    max_epochs: 10
     min_epochs: null
     max_steps: -1
     min_steps: null
@@ -50,7 +60,7 @@ fit:
     deterministic: false
     reload_dataloaders_every_n_epochs: 0
     reload_dataloaders_every_epoch: false
-    # auto_lr_find: true
+    auto_lr_find: true
     replace_sampler_ddp: true
     detect_anomaly: false
     auto_scale_batch_size: false
@@ -63,34 +73,38 @@ fit:
     stochastic_weight_avg: false
     terminate_on_nan: null
   model:
-    config:
-      architecture:
-        pretrained_embeddings_path: /root/scratch/griffon/data/base/stage2/embeddings.pkl
-        vocab_file: /root/scratch/griffon/data/base/stage2/vocab.pkl
-        subtoken_embedding_dim: 512
-        num_subtokens: 5
-        token_embedding_dim: 1024
-        scale_token_embeddings: false
-        activation_fn: tanh
-        code_transformer:
-          num_layers: 4
-          encoder_layer :
-            nhead: 8
-            dim_feedforward: 2048
-            num_relative_distances: 4
-          norm:
-            type: layer_norm
-            eps: 1.e-5
-      optimizer:
-        loss_fn:
-          type: f_loss
-          gamma: 2
-        lr: 0.1
-        warmup_steps: 4000
+    class_path: griffon.models.encoder.count.CounT
+    init_args:
+      config:
+        architecture:
+          pretrained_embeddings_path: data/base/stage2/embeddings.pkl
+          vocab_file: data/base/stage2/vocab.pkl
+          subtoken_embedding_dim: 512
+          num_subtokens: 5
+          token_embedding_dim: 1024
+          scale_token_embeddings: false
+          activation_fn: tanh
+          code_transformer:
+            num_layers: 4
+            encoder_layer :
+              nhead: 8
+              dim_feedforward: 2048
+              num_relative_distances: 4
+            norm:
+              type: layer_norm
+              eps: 1.e-5
+        optimizer:
+          loss_fn:
+            type: f_loss
+            gamma: 2
+          lr: 0.1
+          warmup_steps: 2000
 
   data:
-    data_root: /root/scratch/griffon/data
-    batch_size: 128
-    num_workers: 16
+    class_path: griffon.dataset.count_datamodule.CounTDataModule
+    init_args:
+      data_root: data
+      batch_size: 128
+      num_workers: 16
 
   ckpt_path: null

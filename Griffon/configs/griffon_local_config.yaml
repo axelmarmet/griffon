@@ -8,13 +8,13 @@ fit:
     logger: null
     checkpoint_callback: null
     enable_checkpointing: false
-    callbacks: null
-      # - class_path: pytorch_lightning.callbacks.model_checkpoint.ModelCheckpoint
-      #   init_args:
-      #     monitor: semantic test cases
-      #     filename: sample-count-{epoch:02d}-{val_loss:.2f}
-      #     save_top_k: 3
-      #     mode: min
+    callbacks:
+      - class_path: pytorch_lightning.callbacks.model_checkpoint.ModelCheckpoint
+        init_args:
+          monitor: semantic test cases
+          filename: sample-count-{epoch:02d}-{val_loss:.2f}
+          save_top_k: 3
+          mode: min
     default_root_dir: checkpoints
     gradient_clip_val: null
     gradient_clip_algorithm: null
