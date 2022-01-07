@@ -77,8 +77,8 @@ fit:
     init_args:
       config:
         architecture:
-          pretrained_embeddings_path: data/base/stage2/embeddings.pkl
-          vocab_file: data/base/stage2/vocab.pkl
+          pretrained_embeddings_path: /root/scratch/griffon/data/base/stage2/embeddings.pkl
+          vocab_file: /root/scratch/griffon/data/base/stage2/vocab.pkl
           subtoken_embedding_dim: 512
           num_subtokens: 5
           token_embedding_dim: 1024
@@ -103,7 +103,7 @@ fit:
   data:
     class_path: griffon.dataset.count_datamodule.CounTDataModule
     init_args:
-      data_root: data
+      data_root: /root/scratch/griffon/data
       batch_size: 128
       num_workers: 16
 
