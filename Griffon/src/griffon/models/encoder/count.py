@@ -184,7 +184,7 @@ class CounT(pl.LightningModule):
 
             res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=1).mean()
 
-            self.log("semantic test cases", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
+            self.log("semantic_test_cases", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
             if isinstance(self.logger, WandbLogger):
                 self.logger.log_text(key="verbose semantic tests",
                                         columns = verbose_columns,
@@ -200,7 +200,7 @@ class CounT(pl.LightningModule):
 
             predictions = self.forward(inp)
             res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=K).mean()
-            self.log(f"validation top {K}", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
+            self.log(f"validation_top_3", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
 
         assert dataloader_idx < 2, f"Unexpected index {dataloader_idx}"
 
