@@ -37,11 +37,15 @@ class GriffonDataset(Dataset):
         sample:GriffonSample = pickle.load(open(self.files[index], "rb"))
         return sample
 
+    def simple_collate_fn(self, samples:List[GriffonSample])->GriffonSample:
+        assert len(samples) == 1
+        return samples[0]
+
     def to_dataloader(self, num_workers:int):
         return DataLoader(
             self,
             batch_size=1,
-            collate_fn=(lambda l : l[0]), # type: ignore
+            collate_fn=self.simple_collate_fn, # type: ignore
             pin_memory=True,
             num_workers=num_workers)
 

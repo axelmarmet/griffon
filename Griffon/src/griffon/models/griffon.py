@@ -79,7 +79,7 @@ class Griffon(pl.LightningModule):
         """
         mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
         mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
-        return mask
+        return mask.to(self.device)
 
     def forward(self, inp:GriffonBatch)->Tensor:
         NUM_DISTANCES = inp.distances_indices.shape[0]
@@ -166,7 +166,12 @@ class Griffon(pl.LightningModule):
         # we shift the targets by 1 since <sos> should predict the first actual token
         # and the last actual token should predict <eos>
         tgts = batch.lemmas[:,1:].view(B, -1)
-        loss = F.cross_entropy(preds, tgts, ignore_index=TGT_IGNORE_INDEX)
+        loss = focal_loss(
+            preds,
+            tgts,
+            gamma=self.hparams["loss_fn"]["gamma"],
+            ignore_index=TGT_IGNORE_INDEX
+        )
         self.log("training_loss", loss, on_step=False, on_epoch=True)
         return loss
 
@@ -175,7 +180,7 @@ class Griffon(pl.LightningModule):
 
         tgts = batch.lemma[1:].view(-1)
         res = top_k_metric(preds, tgts, 1)
-        self.log("validation accuracy", res, on_step=False, on_epoch=True)
+        self.log("validation_accuracy", res, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
         assert isinstance(self.trainer, Trainer)

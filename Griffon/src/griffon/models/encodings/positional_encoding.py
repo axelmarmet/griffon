@@ -15,7 +15,7 @@ class PositionalEncoding(nn.Module):
     def __init__(self,
                  emb_size: int,
                  dropout: float,
-                 maxlen: int = 256):
+                 maxlen: int = 300):
         """init the encoding
 
         Args:

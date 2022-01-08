@@ -42,6 +42,7 @@ class PointerNetwork(nn.Module):
         assert src_subtokens.shape[1] == extended_vocab_ids.shape[1]
         assert src_subtokens.shape[2] == tgt_subtokens.shape[2]
 
+        DEVICE = logits.device
 
         SRC_LEN = src_subtokens.shape[1]
         TGT_LEN = tgt_subtokens.shape[1]
@@ -53,7 +54,7 @@ class PointerNetwork(nn.Module):
                                                             key=src_subtokens)
 
         # Sum up probabilities of the same tokens
-        M = torch.zeros((SRC_LEN,len_extended_vocab + len_vocab))
+        M = torch.zeros((SRC_LEN,len_extended_vocab + len_vocab), device=DEVICE)
         M[torch.arange(SRC_LEN), extended_vocab_ids] = 1
         attention = attention_distribution @ M
         attention[attention == 0] = torch.finfo(torch.float).eps
