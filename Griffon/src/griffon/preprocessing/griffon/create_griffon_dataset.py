@@ -103,10 +103,14 @@ def process_sample(args:Namespace, sample_path:str):
     def transform_sample(sample: Stage2Sample)->GriffonSample:
         extended_vocab = {}
 
+        selected_hypotheses = sample.hypotheses
+        if len(selected_hypotheses) > 64:
+            selected_hypotheses = selected_hypotheses[:64]
+
         transformed_hypotheses = [transform_statement(
                                     hypothesis,
                                     extended_vocab)
-                                  for hypothesis in sample.hypotheses]
+                                  for hypothesis in selected_hypotheses]
 
         transformed_goal = transform_statement(sample.goal, extended_vocab)
         transformed_lemma = transform_lemma(sample.lemma_used, extended_vocab)
