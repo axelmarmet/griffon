@@ -506,7 +506,10 @@ class CodeTransformer(TransformerEncoder):
         assert N_BINS == 32
 
         if src_key_padding_mask is not None:
-            assert (src_key_padding_mask[:, 0] == 0).all(), "First token padded; check padding mask!"
+            first_padded_token_mask = src_key_padding_mask[:, 0] == True
+            if first_padded_token_mask.any():
+                assert (src_key_padding_mask[first_padded_token_mask].prod().bool().all())
+
         content_stream_out = self.dropout(src.transpose(0, 1).contiguous())
         src_mask = src_mask.permute(1, 2, 0).contiguous() if src_mask is not None else None
 

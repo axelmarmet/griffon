@@ -1,3 +1,4 @@
+from typing import Optional
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -11,12 +12,13 @@ class SimpleMHA(nn.Module):
 
     def forward(self,
                 query:torch.Tensor,
-                key:torch.Tensor)->torch.Tensor:
+                key:torch.Tensor,
+                key_padding_mask:Optional[torch.Tensor] = None)->torch.Tensor:
 
         S, B = key.shape[:2]
         value = self.dummy_values.expand(S, B, -1) # type: ignore
 
-        return self.mha.forward(query, key, value)[1] #type:ignore
+        return self.mha.forward(query, key, value, key_padding_mask=key_padding_mask)[1] #type:ignore
 
     def unbatched_forward(self,
                 query:torch.Tensor,

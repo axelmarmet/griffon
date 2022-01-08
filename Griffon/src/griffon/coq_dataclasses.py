@@ -13,6 +13,7 @@ import networkx as nx
 
 from lark.tree import Tree
 from torch import Tensor
+import torch
 
 
 @dataclass
@@ -131,32 +132,47 @@ class GriffonBatch:
     extended_vocabulary_ids : Tensor # shape `batch x number_statements x max_number_tokens x max_subtokens`
     distances_indices       : Tensor # shape `batch x max_number_statements x number_distances x max_number_tokens x max_number_tokens`
     distances_bins          : Tensor # shape `batch x max_number_statements x number_distances x number_bins`
+    lemmas                  : Tensor # shape `batch x number_lemma_tokens x max_subtokens`
 
     # To only use actual info in all of the above tensors
-    token_padding_mask      : Tensor # shape `batch x number_statements x max_number_tokens`
+    statement_token_padding : Tensor # shape `batch x number_statements x max_number_tokens`
+    lemma_token_padding     : Tensor # shape `batch x number_lemma_tokens`
 
-    lemmas                  : Tensor  # shape `batch x number_tokens x max_subtokens`
-    extended_vocab_lens     : Tensor  # shape `batch`
     extended_vocabularies   : List[Dict[str,int]]
+
+    def validate(self):
+        batches = [0,0,0,0,0,0,0]
+        statements = [0,0,0,0,0]
+        tokens = [0,0,0,0,0]
+        lemma_tokens = [0,0]
+        subtokens = [0,0,0]
+        distances = [0,0]
+
+        batches[0], statements[0], tokens[0], subtokens[0] = self.statements.shape
+        batches[1], statements[1], tokens[1], subtokens[1] = self.extended_vocabulary_ids.shape
+
+        batches[2], statements[2], distances[0], tokens[2], tokens[3] = self.distances_indices.shape
+        batches[3], statements[3], distances[1], _ = self.distances_bins.shape
+        batches[4], statements[4], tokens[4] = self.statement_token_padding.shape
+        batches[5], lemma_tokens[0], subtokens[2] = self.lemmas.shape
+        batches[6], lemma_tokens[1] = self.lemma_token_padding.shape
+
+        assert (all(batches[0] == b for b in batches)), "Not all tensors have the same amount of batches"
+        assert (all(statements[0] == s for s in statements)), "Not all tensors have the same number of statements"
+        assert (all(tokens[0] == t for t in tokens)), "Not all tensors have the same number of tokens"
+        assert (all(lemma_tokens[0] == t for t in lemma_tokens)), "Not all tensors have the same number of lemma tokens"
+        assert (all(subtokens[0] == st for st in subtokens)), "Not all tensors have the same number of subtokens"
+        assert (all(distances[0] == d for d in distances)), "Not all tensors have the same number of distances"
+
+        # check that all -1 subtokens are contained in the padding mask
+        invalid_mask = (self.lemmas == -1).sum(dim=-1).bool()
+        # check invalid_mask -> lemma_token_padding === !invalid_mask \/ lemma_token_padding
+        assert torch.logical_or(torch.logical_not(invalid_mask), self.lemma_token_padding).all()
+
 
 @dataclass
 class CTCoqOutput:
     ...
-
-# @dataclass
-# class CTCoqBatch:
-#     sequences               : Tensor # shape `max_number_statements x max_number_tokens x max_subtokens`
-#     extended_vocabulary_ids : Tensor # shape `max_number_statements x max_len_subtokens_in_seq`
-#     pointer_pad_mask        : Tensor # shape `max_number_statements x max_number_tokens x max_subtokens`
-#     distances_index         : Tensor # shape `max_number_statements x number_distances x max_number_tokens x max_number_tokens`
-#     distances_bins          : Tensor # shape `max_number_statements x number_distances x number_bins`
-
-#     # To only use actual info in all of the above tensors
-#     padding_mask            : Tensor # shape `number_statements x max_number_tokens`
-
-#     lemma                   : Tensor  # shape `number_tokens x max_subtokens`
-#     extended_vocabularies   : List[Dict[str,int]]
-
 
 @dataclass
 class CounTSample:
