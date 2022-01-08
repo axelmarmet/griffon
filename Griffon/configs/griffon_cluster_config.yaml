@@ -12,7 +12,7 @@ fit:
         init_args:
           monitor: validation_accuracy
           dirpath: /root/scratch/griffon/griffon/checkpoints
-          filename: sample-count-{epoch:02d}-{validation_accuracy:.3f}
+          filename: sample-griffon-{epoch:02d}-{validation_accuracy:.3f}
           save_top_k: 3
           mode: max
     default_root_dir: null
@@ -22,7 +22,7 @@ fit:
     num_nodes: 1
     num_processes: 1
     devices: null
-    gpus: 1
+    gpus: 4
     auto_select_gpus: false
     tpu_cores: null
     ipus: null
