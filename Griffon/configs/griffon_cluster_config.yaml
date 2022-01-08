@@ -33,7 +33,7 @@ fit:
     track_grad_norm: -1
     check_val_every_n_epoch: 1
     fast_dev_run: false
-    accumulate_grad_batches: 400
+    accumulate_grad_batches: 16
     max_epochs: 20
     min_epochs: null
     max_steps: -1
@@ -105,5 +105,6 @@ fit:
     init_args:
       data_root: /root/scratch/griffon/data
       num_workers: 16
+      batch_size: 16
 
   ckpt_path: null
