@@ -98,7 +98,7 @@ fit:
           type: f_loss
           gamma: 2
         lr: 0.1
-        warmup_steps: 4000
+        warmup_steps: 1000
 
   data:
     class_path: griffon.dataset.griffon_datamodule.GriffonDataModule

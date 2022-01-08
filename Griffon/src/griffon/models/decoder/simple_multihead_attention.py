@@ -6,7 +6,7 @@ class SimpleMHA(nn.Module):
 
     def __init__(self, embed_dim:int, n_head:int):
         super(SimpleMHA, self).__init__()
-        self.dummy_values = torch.zeros((1,1,embed_dim))
+        self.register_buffer("dummy_values", torch.zeros((1,1,embed_dim)))
         self.mha = nn.MultiheadAttention(embed_dim, n_head)
 
     def forward(self,
@@ -14,7 +14,7 @@ class SimpleMHA(nn.Module):
                 key:torch.Tensor)->torch.Tensor:
 
         S, B = key.shape[:2]
-        value = self.dummy_values.expand(S, B, -1)
+        value = self.dummy_values.expand(S, B, -1) # type: ignore
 
         return self.mha.forward(query, key, value)[1] #type:ignore
 

@@ -78,7 +78,7 @@ class Griffon(pl.LightningModule):
         """
         mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
         mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
-        return mask
+        return mask.to(self.device)
 
     def forward(self, inp:GriffonSample)->Tensor:
 
