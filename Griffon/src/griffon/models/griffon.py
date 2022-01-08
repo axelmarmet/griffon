@@ -143,7 +143,7 @@ class Griffon(pl.LightningModule):
         # and the last actual token should predict <eos>
         tgts = batch.lemma[1:].view(-1)
         loss = F.cross_entropy(preds, tgts)
-        self.log("training loss", loss, on_step=False, on_epoch=True)
+        self.log("training_loss", loss, on_step=False, on_epoch=True)
         return loss
 
     def validation_step(self, batch:GriffonSample, batch_idx, dataloader_idx=0):
@@ -151,7 +151,7 @@ class Griffon(pl.LightningModule):
 
         tgts = batch.lemma[1:].view(-1)
         res = top_k_metric(preds, tgts, 1)
-        self.log("validation accuracy", res, on_step=False, on_epoch=True)
+        self.log("validation_accuracy", res, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
         assert isinstance(self.trainer, Trainer)
