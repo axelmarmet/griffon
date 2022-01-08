@@ -142,7 +142,12 @@ class Griffon(pl.LightningModule):
         # we shift the targets by 1 since <sos> should predict the first actual token
         # and the last actual token should predict <eos>
         tgts = batch.lemma[1:].view(-1)
-        loss = F.cross_entropy(preds, tgts)
+        loss = focal_loss(
+            preds,
+            tgts,
+            gamma=self.hparams["loss_fn"]["gamma"],
+            ignore_index=TGT_IGNORE_INDEX
+        )
         self.log("training_loss", loss, on_step=False, on_epoch=True)
         return loss
 
