@@ -169,6 +169,25 @@ class GriffonBatch:
         # check invalid_mask -> lemma_token_padding === !invalid_mask \/ lemma_token_padding
         assert torch.logical_or(torch.logical_not(invalid_mask), self.lemma_token_padding).all()
 
+    def pin_memory(self):
+        self.statements = self.statements.pin_memory()
+        self.extended_vocabulary_ids = self.extended_vocabulary_ids.pin_memory()
+        self.distances_indices = self.distances_indices.pin_memory()
+        self.distances_bins = self.distances_bins.pin_memory()
+        self.statement_token_padding = self.statement_token_padding.pin_memory()
+        self.lemmas = self.lemmas.pin_memory()
+        self.lemma_token_padding = self.lemma_token_padding.pin_memory()
+        return self
+
+    def to(self, *args):
+        self.statements = self.statements.to(*args)
+        self.extended_vocabulary_ids = self.extended_vocabulary_ids.to(*args)
+        self.distances_indices = self.distances_indices.to(*args)
+        self.distances_bins = self.distances_bins.to(*args)
+        self.statement_token_padding = self.statement_token_padding.to(*args)
+        self.lemmas = self.lemmas.to(*args)
+        self.lemma_token_padding = self.lemma_token_padding.to(*args)
+        return self
 
 @dataclass
 class CTCoqOutput:
