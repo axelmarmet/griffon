@@ -19,34 +19,37 @@ class PointerNetwork(nn.Module):
                 logits:torch.Tensor,
                 extended_vocab_ids:torch.Tensor,
                 src_subtokens:torch.Tensor,
+                src_padding:torch.Tensor,
                 tgt_subtokens:torch.Tensor,
                 len_vocab: int,
-                len_extended_vocab: int)->torch.Tensor:
+                len_extended_vocab: torch.Tensor)->torch.Tensor:
         """
 
         Args:
-            logits (torch.Tensor): shape `tgt_subtokens, vocab_len`
-            extended_vocab_ids (torch.Tensor): shape `src_subtokens`
-            src_subtokens (torch.Tensor): shape `src_subtokens, subtoken_dim`
-            tgt_subtokens (torch.Tensor): shape `tgt_subtokens, subtoken_dim`
+            logits (torch.Tensor): shape `batch, tgt_subtokens, vocab_len`
+            extended_vocab_ids (torch.Tensor): shape `batch, src_subtokens`
+            src_subtokens (torch.Tensor): shape `batch, src_subtokens, subtoken_dim`
+            src_padding (torch.Tensor): shape `batch, src_subtokens`
+            tgt_subtokens (torch.Tensor): shape `batch, tgt_subtokens, subtoken_dim`
             len_vocab (int): the length of the fixed vocab
-            len_extended_vocab (int): the length of the extended vocab
+            max_len_extended_vocab (int): the max length of the fixed vocab
         """
 
         # shape validation
         assert logits.shape[0] == tgt_subtokens.shape[0]
-        assert logits.shape[1] == len_vocab
-        assert src_subtokens.shape[0] == extended_vocab_ids.shape[0]
-        assert src_subtokens.shape[1] == tgt_subtokens.shape[1]
+        assert logits.shape[1] == tgt_subtokens.shape[1]
+        assert logits.shape[2] == len_vocab
+        assert src_subtokens.shape[1] == extended_vocab_ids.shape[1]
+        assert src_subtokens.shape[2] == tgt_subtokens.shape[2]
 
 
-        SRC_LEN = src_subtokens.shape[0]
-        TGT_LEN = tgt_subtokens.shape[0]
+        SRC_LEN = src_subtokens.shape[1]
+        TGT_LEN = tgt_subtokens.shape[1]
 
         # note that copy prob is NOT a log prob
         copy_prob = torch.sigmoid(self.linear(tgt_subtokens))
 
-        attention_distribution = self.mha.unbatched_forward(query=tgt_subtokens,
+        attention_distribution = self.mha.forward(query=tgt_subtokens,
                                                             key=src_subtokens)
 
         # Sum up probabilities of the same tokens

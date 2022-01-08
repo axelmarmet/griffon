@@ -134,10 +134,10 @@ class GriffonBatch:
 
     # To only use actual info in all of the above tensors
     token_padding_mask      : Tensor # shape `batch x number_statements x max_number_tokens`
-    pointer_pad_mask        : Tensor # shape `batch x number_statements x max_number_tokens x max_subtokens`
 
-    lemma                   : Tensor  # shape `batch x number_tokens x max_subtokens`
-    extended_vocabulary     : List[Dict[str,int]]
+    lemmas                  : Tensor  # shape `batch x number_tokens x max_subtokens`
+    extended_vocab_lens     : Tensor  # shape `batch`
+    extended_vocabularies   : List[Dict[str,int]]
 
 @dataclass
 class CTCoqOutput:
