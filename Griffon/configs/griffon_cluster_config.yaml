@@ -22,7 +22,7 @@ fit:
     num_nodes: 1
     num_processes: 1
     devices: null
-    gpus: 4
+    gpus: 2
     auto_select_gpus: false
     tpu_cores: null
     ipus: null
@@ -105,6 +105,6 @@ fit:
     init_args:
       data_root: /root/scratch/griffon/data
       num_workers: 16
-      batch_size: 16
+      batch_size: 8
 
   ckpt_path: null
