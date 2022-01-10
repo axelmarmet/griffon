@@ -4,6 +4,7 @@ secrets
 lightning_logs
 
 models/*.pickle
+models/*.ckpt
 
 *.mdb
 
