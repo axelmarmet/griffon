@@ -211,6 +211,71 @@ class CounT(pl.LightningModule):
             assert isinstance(batch, SemanticTestCases)
             semantic_validation_step(batch)
 
+    def test_step(self, batch, batch_idx, dataloader_idx=0):
+
+        def semantic_test_step(test_cases:SemanticTestCases):
+            inp, tgt_ids = test_cases.batch.as_tuple()
+            predictions:Tensor = self.forward(inp)
+
+            itos = self.vocab.get_itos()
+
+            verbose_columns = ["Statement Name", "Masked Statement", "Expected", "Predicted"]
+            verbose_data = []
+
+            summary_columns = ["Statement Name", "Ratio"]
+            summary_data = []
+
+            for pred, targets, name, orig_s, masked_s in zip(predictions,
+                                                            tgt_ids, test_cases.names,
+                                                            test_cases.original_sentences,
+                                                            test_cases.masked_sentences):
+                mask = targets != TGT_IGNORE_INDEX
+                pred = torch.argmax(pred[mask], dim=-1)
+                targets = targets[mask]
+                assert pred.shape == targets.shape
+
+                correctly_classified = torch.count_nonzero(pred == targets)
+
+                summary_data.append([name, f"{correctly_classified}/{pred.shape[0]}"])
+                for i in range(pred.shape[0]):
+                    verbose_data.append([name, masked_s, itos[targets[i]], itos[pred[i]]])
+
+
+            res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=1).mean()
+
+            self.log("test semantic test cases", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
+            if isinstance(self.logger, WandbLogger):
+                self.logger.log_text(key="test verbose semantic tests",
+                                        columns = verbose_columns,
+                                        data = verbose_data)
+                self.logger.log_text(key="test summary semantic tests",
+                                        columns = summary_columns,
+                                        data = summary_data)
+
+        def mlm_test_step(batch:CounTBatch):
+            K = 3
+
+            inp, tgt_ids = batch.as_tuple()
+
+            predictions = self.forward(inp)
+            res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), pad_idx=self.vocab[PAD_TOKEN], k=K).mean()
+            self.log(f"test top 3 no padding", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
+            res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), pad_idx=self.vocab[PAD_TOKEN], k=1).mean()
+            self.log(f"test accuracy no padding", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
+            res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=K).mean()
+            self.log(f"test top 3 with padding", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
+            res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=1).mean()
+            self.log(f"test accuracy with padding", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
+
+        assert dataloader_idx < 2, f"Unexpected index {dataloader_idx}"
+
+        if dataloader_idx == 0:
+            assert isinstance(batch, CounTBatch)
+            mlm_test_step(batch)
+        else:
+            assert isinstance(batch, SemanticTestCases)
+            semantic_test_step(batch)
+
     def configure_optimizers(self):
         assert isinstance(self.trainer, Trainer)
         num_batches = self.trainer.datamodule.steps_per_epoch / self.trainer.accumulate_grad_batches #type: ignore

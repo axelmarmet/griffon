@@ -24,7 +24,7 @@ from pytorch_lightning.utilities.cli import MODEL_REGISTRY, DATAMODULE_REGISTRY
 
 class MyLightningCLI(LightningCLI):
 
-    def before_fit(self):
+    def _config_logger(self):
         assert isinstance(self.trainer, Trainer)
 
         if isinstance(self.trainer.logger, WandbLogger):
@@ -34,6 +34,11 @@ class MyLightningCLI(LightningCLI):
             logging.getLogger("requests").setLevel(logging.WARNING)
             logging.getLogger("urllib3").setLevel(logging.WARNING)
 
+    def before_test(self):
+        self._config_logger()
+
+    def before_fit(self):
+        self._config_logger()
         # should only give the train dataloader
         self.trainer.tune(self.model, datamodule=self.datamodule)
         return

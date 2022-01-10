@@ -35,6 +35,7 @@ class CounTDataModule(pl.LightningDataModule):
             self.semantic_valid_split = SemanticTestCaseDataset(self.semantic_root)
         elif stage == 'test':
             self.test_split = CounTDataset(self.count_root, "test")
+            self.semantic_valid_split = SemanticTestCaseDataset(self.semantic_root)
 
     def train_dataloader(self):
         return self.train_split.to_dataloader(self.batch_size, self.num_workers)
@@ -45,7 +46,9 @@ class CounTDataModule(pl.LightningDataModule):
         return [count_val_dataloader, semantic_val_dataloader]
 
     def test_dataloader(self):
-        return self.test_split.to_dataloader(self.batch_size, self.num_workers)
+        count_test_dataloader = self.test_split.to_dataloader(self.batch_size, self.num_workers)
+        semantic_test_dataloader = self.semantic_valid_split.to_dataloader()
+        return [count_test_dataloader, semantic_test_dataloader]
 
     def teardown(self, stage: Optional[str] = None):
         pass

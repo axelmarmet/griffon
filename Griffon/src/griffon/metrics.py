@@ -6,11 +6,10 @@ from griffon.constants import TGT_IGNORE_INDEX
 
 def top_k_metric(preds:Tensor, tgt:Tensor, pad_idx:Optional[int] = None, k:int=3):
 
-    B, number_sub_tokens, len_vocab  = preds.shape
-    B_, number_sub_tokens_, = tgt.shape
+    number_sub_tokens, len_vocab  = preds.shape
+    number_sub_tokens_, = tgt.shape
 
     assert number_sub_tokens == number_sub_tokens_
-    assert B == B_
 
     mask = tgt != TGT_IGNORE_INDEX
     if pad_idx is not None:

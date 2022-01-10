@@ -328,9 +328,10 @@ class Griffon(pl.LightningModule):
         B = batch.lemmas.shape[0]
 
         preds = self.forward(batch)
+        len_vocab = preds.shape[-1]
 
         tgts = batch.lemmas[:,1:].view(B, -1)
-        res = top_k_metric(preds, tgts, 1)
+        res = top_k_metric(preds.reshape(-1, len_vocab), tgts.reshape(-1), 1)
         self.log("validation_accuracy", res, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
