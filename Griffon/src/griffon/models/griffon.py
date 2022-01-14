@@ -3,6 +3,8 @@ import os
 import pickle
 from numpy import sqrt
 
+from typing import Tuple
+
 import pytorch_lightning as pl
 from pytorch_lightning.loggers.wandb import WandbLogger
 from pytorch_lightning.trainer.trainer import Trainer
@@ -83,55 +85,24 @@ class Griffon(pl.LightningModule):
 
     def forward(self, inp:GriffonBatch)->Tensor:
 
-        ################################################################
-        # we are overcautious/inneficient and reshape frequently to make
-        # sure no mistake slips by
-        ################################################################
+        statement_tokens, statement_subtokens = self.encode(inp)
+        log_probs = self.decode(inp, statement_tokens, statement_subtokens)
 
+        return log_probs
+
+
+    def encode(self, inp:GriffonBatch)->Tuple[Tensor, Tensor]:
+        """Encode the statements
+
+        Args:
+            inp (GriffonBatch): [description]
+
+        Returns:
+            Tuple[Tensor, Tensor]: [description]
+        """
         NUM_DISTANCES = inp.distances_indices.shape[2]
         B, NUM_STATEMENTS, S = inp.statements.shape[:3]
-        L = inp.lemmas.shape[1]
         E = self.token_embedding_dim
-        S_E = self.subtoken_embedding_dim
-
-        def process_statement_subtokens(statements:Tensor)->Tensor:
-            """Takes statements subtoken ids and return statement tokens
-
-            Args:
-                statements (Tensor): shape `B x NUM_STATEMENTS x S x SUBTOKENS`
-
-            Returns:
-                Tensor: shape `B x NUM_STATEMENTS x S x E
-            """
-
-            assert list(statements.shape) == [B, NUM_STATEMENTS, S, NUM_SUB_TOKENS]
-
-            statement_subtokens_embeddings:Tensor = \
-                self.embedding.forward(statements).view(B, NUM_STATEMENTS, S, self.subtoken_embedding_dim * NUM_SUB_TOKENS) # type: ignore
-            return self.token_encoder(statement_subtokens_embeddings)
-
-        def process_lemma_subtokens(lemmas:Tensor)->Tensor:
-            """Takes lemma subtoken ids and return statement tokens
-
-            Args:
-                lemmas (Tensor): shape `B x L x SUBTOKENS`
-
-            Returns:
-                Tensor: shape `B x L-1 x E
-            """
-            assert list(lemmas.shape) == [B, L, NUM_SUB_TOKENS]
-
-            # we discard the <eos> token from the input
-            lemmas = lemmas[:,:-1]
-
-            # giving the embedding of copied subtoken would probably be better
-            lemmas[lemmas >= self.vocab_len] = self.unk_id
-            # we don't care about the -1 vocabs, we just don't want an OOB exception in the embedding
-            lemmas[lemmas == TGT_IGNORE_INDEX] = self.unk_id
-
-            lemma_subtokens_embeddings:Tensor = \
-                self.embedding.forward(lemmas).view(B, L-1, self.subtoken_embedding_dim * NUM_SUB_TOKENS) # type: ignore
-            return self.token_encoder(lemma_subtokens_embeddings)
 
         def encode_statement_tokens(statement_tokens:Tensor,
                                     statement_token_padding:Tensor,
@@ -178,33 +149,44 @@ class Griffon(pl.LightningModule):
 
             return statement_token_embeddings.reshape(B, NUM_STATEMENTS, S, self.token_embedding_dim)
 
-        def extract_statement_subtokens(statement_tokens:Tensor)->Tensor:
-            """ Go from tokens to subtokens
+        statement_tokens = self.token_encoder(inp.statements)
+        statement_tokens = encode_statement_tokens(statement_tokens,
+                                                   inp.statement_token_padding,
+                                                   inp.distances_indices,
+                                                   inp.distances_bins)
+        statement_subtokens = self.token_decoder(statement_tokens)
+
+        return statement_tokens, statement_subtokens
+
+    def decode(self, inp:GriffonBatch,
+               statement_tokens:Tensor,
+               statement_subtokens:Tensor)->Tensor:
+        B, NUM_STATEMENTS, S = inp.statements.shape[:3]
+        L = inp.lemmas.shape[1]
+        E = self.token_embedding_dim
+        S_E = self.subtoken_embedding_dim
+
+        def process_lemma_subtokens(lemmas:Tensor)->Tensor:
+            """Takes lemma subtoken ids and return statement tokens
 
             Args:
-                statement_tokens (Tensor): shape `B x NUM_STATEMENTS x S x E`
+                lemmas (Tensor): shape `B x L x SUBTOKENS`
 
             Returns:
-                Tensor: shape `B x NUM_STATEMENTS x S x NUM_SUBTOKENS x SUBTOKEN_DIM`
+                Tensor: shape `B x L-1 x E
             """
-            # shape validation
-            assert list(statement_tokens.shape) == [B, NUM_STATEMENTS, S, E]
+            assert list(lemmas.shape) == [B, L, NUM_SUB_TOKENS]
 
-            return self.token_decoder(statement_tokens).view(B, NUM_STATEMENTS, S, NUM_SUB_TOKENS, self.subtoken_embedding_dim)
+            # we discard the <eos> token from the input
+            lemmas = lemmas[:,:-1]
 
-        def extract_lemma_subtokens(lemma_tokens:Tensor)->Tensor:
-            """ Go from tokens to subtokens
+            # giving the embedding of copied subtoken would probably be better
+            lemmas[lemmas >= self.vocab_len] = self.unk_id
+            # we don't care about the -1 vocabs, we just don't want an OOB exception in the embedding
+            lemmas[lemmas == TGT_IGNORE_INDEX] = self.unk_id
 
-            Args:
-                lemma_tokens (Tensor): shape `B x L-1 x E`
-
-            Returns:
-                Tensor: shape `B x L-1 x NUM_SUBTOKENS x SUBTOKEN_DIM`
-            """
-            # shape validation
-            assert list(lemma_tokens.shape) == [B, L-1, E]
-
-            return self.token_decoder(lemma_tokens).view(B, L-1, NUM_SUB_TOKENS, self.subtoken_embedding_dim)
+            lemma_subtokens_embeddings:Tensor = self.embedding.forward(lemmas) # type: ignore
+            return self.token_encoder(lemma_subtokens_embeddings)
 
         def decode_lemma_tokens(statement_tokens:Tensor,
                         statement_padding:Tensor,
@@ -285,20 +267,13 @@ class Griffon(pl.LightningModule):
 
             return log_probs
 
-        statement_tokens = process_statement_subtokens(inp.statements)
-        statement_tokens = encode_statement_tokens(statement_tokens,
-                                                   inp.statement_token_padding,
-                                                   inp.distances_indices,
-                                                   inp.distances_bins)
-
         lemma_tokens = process_lemma_subtokens(inp.lemmas)
         lemma_tokens = decode_lemma_tokens(statement_tokens,
                                            inp.statement_token_padding,
                                            lemma_tokens,
                                            inp.lemma_token_padding)
 
-        statement_subtokens = extract_statement_subtokens(statement_tokens)
-        lemma_subtokens = extract_lemma_subtokens(lemma_tokens)
+        lemma_subtokens = self.token_decoder(lemma_tokens)
 
         log_probs = get_predictions(lemma_subtokens,
                                     statement_subtokens,
@@ -306,6 +281,30 @@ class Griffon(pl.LightningModule):
                                     inp.statement_token_padding,
                                     inp.extended_vocabularies)
         return log_probs
+
+    # function to generate output sequence using greedy algorithm
+    def greedy_decode(model, src, src_mask, max_len, start_symbol):
+        ...
+        src = src.to(DEVICE)
+        src_mask = src_mask.to(DEVICE)
+
+        memory = model.encode(src, src_mask)
+        ys = torch.ones(1, 1).fill_(start_symbol).type(torch.long).to(DEVICE)
+        for i in range(max_len-1):
+            memory = memory.to(DEVICE)
+            tgt_mask = (generate_square_subsequent_mask(ys.size(0))
+                        .type(torch.bool)).to(DEVICE)
+            out = model.decode(ys, memory, tgt_mask)
+            out = out.transpose(0, 1)
+            prob = model.generator(out[:, -1])
+            _, next_word = torch.max(prob, dim=1)
+            next_word = next_word.item()
+
+            ys = torch.cat([ys,
+                            torch.ones(1, 1).type_as(src.data).fill_(next_word)], dim=0)
+            if next_word == EOS_IDX:
+                break
+        return ys
 
     def training_step(self, batch:GriffonBatch, batch_idx):
         B = batch.lemmas.shape[0]

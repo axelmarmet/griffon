@@ -29,10 +29,12 @@ from griffon.dataset.semantic_testcase_dataset import SemanticTestCaseDataset, S
 from griffon.functional.focal_loss import focal_loss
 from griffon.metrics import top_k_metric
 from griffon.models.cosine_warmup_scheduler import CosineWarmupScheduler
+from griffon.models.decoder.token_decoder import TokenDecoder
 from griffon.models.encoder.code_transformer import CodeTransformer
 
 from griffon.coq_dataclasses import CounTBatch, CounTBatchInput
 from griffon.models.encoder.standard_transformer import Seq2SeqEncoder
+from griffon.models.encoder.token_encoder import TokenEncoder
 from griffon.preprocessing.stage2.vocab import AbstractVocab
 from griffon.utils import cleanup, set_seed, setup
 
@@ -80,17 +82,15 @@ class CounT(pl.LightningModule):
         else:
             self.embedding = nn.Embedding(len(self.vocab), self.subtoken_embedding_dim)
 
-        self.token_encoder = nn.Sequential(
-            nn.Linear(self.num_subtokens * self.subtoken_embedding_dim, self.num_subtokens * self.subtoken_embedding_dim),
-            nn.ReLU(),
-            nn.Linear(self.num_subtokens * self.subtoken_embedding_dim, self.d_model),
+        self.token_encoder = TokenEncoder(
+            self.subtoken_embedding_dim,
+            self.d_model,
             _get_activation_fn(architecture_config["activation_fn"])
         )
 
-        self.token_decoder = nn.Sequential(
-            nn.Linear(self.d_model, self.num_subtokens * self.subtoken_embedding_dim),
-            nn.ReLU(),
-            nn.Linear(self.num_subtokens * self.subtoken_embedding_dim, self.num_subtokens * self.subtoken_embedding_dim),
+        self.token_decoder = TokenDecoder(
+            self.subtoken_embedding_dim,
+            self.d_model,
             _get_activation_fn(architecture_config["activation_fn"])
         )
 
@@ -106,7 +106,7 @@ class CounT(pl.LightningModule):
 
         B, S = inp.input_ids.shape[:2]
 
-        subtokens_embeddings = self.embedding.forward(inp.input_ids).view(B, S, -1)
+        subtokens_embeddings = self.embedding.forward(inp.input_ids)
         token_embeddings = self.token_encoder(subtokens_embeddings)
 
         if self.scale_token_embeddings:
@@ -124,7 +124,7 @@ class CounT(pl.LightningModule):
         assert token_embeddings.shape[1] == S
         assert token_embeddings.shape[2] == self.d_model
 
-        subtokens_embeddings = self.token_decoder(token_embeddings).reshape(B, S, self.num_subtokens, self.subtoken_embedding_dim)
+        subtokens_embeddings = self.token_decoder(token_embeddings)
         predictions = self.predictor(subtokens_embeddings)
 
         return predictions
