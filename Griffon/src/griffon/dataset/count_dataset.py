@@ -28,7 +28,10 @@ class CounTDataset(Dataset[CounTBatch]):
     distance matrices and collating the matrices from multiple samples into one big tensor.
     """
 
-    def __init__(self, root_path:str, split:str):
+    def __init__(self, root_path:str, split:str,
+                 mask_prob:float = 0.15,
+                 random_token_prob: float = 0.1,
+                 leave_unmasked_prob: float = 0.1):
 
         assert os.path.exists(root_path), f"Path {root_path} does not exist"
         assert split in ["train", "test", "valid"], f"Split {split} is not supported"
@@ -39,7 +42,12 @@ class CounTDataset(Dataset[CounTBatch]):
         self.files = sorted(glob(os.path.join(sample_dir, "*.pickle")))
         self.vocab = pickle.load(open(os.path.join(root_path, "vocab.pkl"), "rb"))
 
+        self.mask_prob = mask_prob
+        self.random_token_prob = random_token_prob
+        self.leave_unmasked_prob = leave_unmasked_prob
+
         self.pad_id = self.vocab[PAD_TOKEN]
+        self.mask_id = self.vocab[MASK_TOKEN]
 
     def to_dataloader(self, batch_size:int, num_workers:int):
         return DataLoader(
@@ -53,6 +61,84 @@ class CounTDataset(Dataset[CounTBatch]):
     def __getitem__(self, index:int)->CounTSample:
         sample:CounTSample = pickle.load(open(self.files[index], "rb"))
         return sample
+
+    def mask_item(self, statement:Stage2Statement)->CounTSample:
+        """Heavily inspired from fairseq implementation
+
+        Args:
+            statement (Stage2Statement): [description]
+
+        Returns:
+            CounTSample: [description]
+        """
+
+        sz = len(statement.tokens)
+
+        assert (
+            all(self.mask_id not in token.subtokens for token in statement.tokens)
+        ), f"Dataset contains mask_idx ({self.mask_id}), this is not expected!"
+
+        # decide elements to mask
+        mask = np.full(sz, False)
+        num_mask = int(
+            # add a random number for probabilistic rounding
+            self.mask_prob * sz + np.random.rand()
+        )
+
+        mask_idc = np.random.choice(sz, num_mask, replace=False)
+
+        try:
+            mask[mask_idc] = True
+        except:  # something wrong
+            print(
+                "Assigning mask indexes {} to mask {} failed!".format(
+                    mask_idc, mask
+                )
+            )
+            raise
+
+        new_item = np.full(len(mask), self.pad_id)
+        new_item[mask] = item[torch.from_numpy(mask.astype(np.uint8)) == 1]
+        return torch.from_numpy(new_item)
+
+
+        # decide unmasking and random replacement
+        rand_or_unmask_prob = self.random_token_prob + self.leave_unmasked_prob
+        if rand_or_unmask_prob > 0.0:
+            rand_or_unmask = mask & (np.random.rand(sz) < rand_or_unmask_prob)
+            if self.random_token_prob == 0.0:
+                unmask = rand_or_unmask
+                rand_mask = None
+            elif self.leave_unmasked_prob == 0.0:
+                unmask = None
+                rand_mask = rand_or_unmask
+            else:
+                unmask_prob = self.leave_unmasked_prob / rand_or_unmask_prob
+                decision = np.random.rand(sz) < unmask_prob
+                unmask = rand_or_unmask & decision
+                rand_mask = rand_or_unmask & (~decision)
+        else:
+            unmask = rand_mask = None
+
+        if unmask is not None:
+            mask = mask ^ unmask
+
+        new_item = np.copy(item)
+        new_item[mask] = self.mask_id
+        if rand_mask is not None:
+            num_rand = rand_mask.sum()
+            if num_rand > 0:
+                if self.mask_whole_words is not None:
+                    rand_mask = np.repeat(rand_mask, word_lens)
+                    num_rand = rand_mask.sum()
+
+                new_item[rand_mask] = np.random.choice(
+                    len(self.vocab),
+                    num_rand,
+                    p=self.weights,
+                )
+
+        return torch.from_numpy(new_item)
 
     def __len__(self) -> int:
         return len(self.files)
