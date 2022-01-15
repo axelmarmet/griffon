@@ -1,0 +1,6 @@
+PRJ awesome
+S ocaml_src
+
+PKG lymp
+
+B _build/src
