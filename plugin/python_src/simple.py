@@ -1,8 +1,17 @@
-def get_message():
-	return u"hi there"
+import torch
+import torch.nn as nn
 
-def get_integer():
-	return 42
+class MyNN(nn.Module):
 
-def sum(a, b):
-	return a + b
+	def __init__(self, hidden_dim:int):
+		super(MyNN, self).__init__()
+
+		self.seq = nn.Sequential(
+		nn.Linear(1, hidden_dim),
+		nn.ReLU(),
+		nn.Linear(hidden_dim, 1)
+	)
+
+	def predict(self, x:int)->int:
+		t = torch.tensor([x]).float()
+		return self.seq(t).item()
