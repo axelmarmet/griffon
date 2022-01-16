@@ -34,7 +34,7 @@ from griffon.models.decoder.decoder import Decoder
 from griffon.models.decoder.pointer import PointerNetwork
 from griffon.models.encoder.code_transformer import CodeTransformer
 
-from griffon.coq_dataclasses import CTCoqOutput, GriffonBatch, GriffonSample, CounTBatch, CounTBatchInput
+from griffon.coq_dataclasses import CTCoqOutput, GriffonBatch, GriffonSample, CounTBatch, CounTBatchInput, GriffonStatementBatch
 from griffon.models.encoder.count import CounT
 from griffon.models.encoder.standard_transformer import Seq2SeqEncoder
 from griffon.preprocessing.stage2.vocab import AbstractVocab
@@ -83,15 +83,17 @@ class Griffon(pl.LightningModule):
         mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
         return mask.to(self.device)
 
-    def forward(self, inp:GriffonBatch)->Tensor:
+    def forward(self, batch:GriffonBatch)->Tensor:
 
-        statement_tokens, statement_subtokens = self.encode(inp)
-        log_probs = self.decode(inp, statement_tokens, statement_subtokens)
+        statement_batch = batch.input
+
+        statement_tokens, statement_subtokens = self.encode(statement_batch)
+        log_probs = self.decode(batch, statement_tokens, statement_subtokens)
 
         return log_probs
 
 
-    def encode(self, inp:GriffonBatch)->Tuple[Tensor, Tensor]:
+    def encode(self, inp:GriffonStatementBatch)->Tuple[Tensor, Tensor]:
         """Encode the statements
 
         Args:
@@ -158,11 +160,11 @@ class Griffon(pl.LightningModule):
 
         return statement_tokens, statement_subtokens
 
-    def decode(self, inp:GriffonBatch,
+    def decode(self, batch:GriffonBatch,
                statement_tokens:Tensor,
                statement_subtokens:Tensor)->Tensor:
-        B, NUM_STATEMENTS, S = inp.statements.shape[:3]
-        L = inp.lemmas.shape[1]
+        B, NUM_STATEMENTS, S = batch.input.statements.shape[:3]
+        L = batch.target.lemmas.shape[1]
         E = self.token_embedding_dim
         S_E = self.subtoken_embedding_dim
 
@@ -263,27 +265,27 @@ class Griffon(pl.LightningModule):
                 src_padding = statement_padding,
                 tgt_subtokens = lemma_subtokens,
                 len_vocab = self.vocab_len,
-                max_len_extended_vocab=max(len(extended_vocab) for extended_vocab in inp.extended_vocabularies))
+                max_len_extended_vocab=max(len(extended_vocab) for extended_vocab in batch.input.extended_vocabularies))
 
             return log_probs
 
-        lemma_tokens = process_lemma_subtokens(inp.lemmas)
+        lemma_tokens = process_lemma_subtokens(batch.target.lemmas)
         lemma_tokens = decode_lemma_tokens(statement_tokens,
-                                           inp.statement_token_padding,
+                                           batch.input.statement_token_padding,
                                            lemma_tokens,
-                                           inp.lemma_token_padding)
+                                           batch.target.lemma_token_padding)
 
         lemma_subtokens = self.token_decoder(lemma_tokens)
 
         log_probs = get_predictions(lemma_subtokens,
                                     statement_subtokens,
-                                    inp.extended_vocabulary_ids,
-                                    inp.statement_token_padding,
-                                    inp.extended_vocabularies)
+                                    batch.input.extended_vocabulary_ids,
+                                    batch.input.statement_token_padding,
+                                    batch.input.extended_vocabularies)
         return log_probs
 
     # function to generate output sequence using greedy algorithm
-    def greedy_decode(model, src, src_mask, max_len, start_symbol):
+    def greedy_decode(self, src, src_mask, max_len, start_symbol):
         ...
         src = src.to(DEVICE)
         src_mask = src_mask.to(DEVICE)
@@ -307,13 +309,12 @@ class Griffon(pl.LightningModule):
         return ys
 
     def training_step(self, batch:GriffonBatch, batch_idx):
-        B = batch.lemmas.shape[0]
 
         preds = self.forward(batch)
         len_vocab = preds.shape[-1]
         # we shift the targets by 1 since <sos> should predict the first actual token
         # and the last actual token should predict <eos>
-        tgts = batch.lemmas[:,1:]
+        tgts = batch.target.lemmas[:,1:]
         loss = focal_loss_from_log_probs(
             preds.view(-1, len_vocab),
             tgts.reshape(-1),
@@ -324,12 +325,12 @@ class Griffon(pl.LightningModule):
         return loss
 
     def validation_step(self, batch:GriffonBatch, batch_idx, dataloader_idx=0):
-        B = batch.lemmas.shape[0]
+        B = batch.target.lemmas.shape[0]
 
         preds = self.forward(batch)
         len_vocab = preds.shape[-1]
 
-        tgts = batch.lemmas[:,1:].view(B, -1)
+        tgts = batch.target.lemmas[:,1:].view(B, -1)
         res = top_k_metric(preds.reshape(-1, len_vocab), tgts.reshape(-1), 1)
         self.log("validation_accuracy", res, on_step=False, on_epoch=True)
 
