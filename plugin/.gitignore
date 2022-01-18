@@ -2,3 +2,6 @@ _build
 simple
 python_log
 **/__pycache__
+.lymp
+Makefile.coq
+Makefile.coq.conf

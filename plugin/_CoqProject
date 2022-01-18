@@ -1,0 +1,10 @@
+-R theories Griffon
+-I ocaml_src
+
+theories/Loader.v
+theories/Demo.v
+
+ocaml_src/interactor.ml
+ocaml_src/interactor.mli
+ocaml_src/griffon.mlg
+ocaml_src/griffon_plugin.mlpack

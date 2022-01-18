@@ -1,14 +1,14 @@
-default: simple
+ifeq "$(COQBIN)" ""
+  COQBIN=$(dir $(shell which coqtop))/
+endif
 
-simple: simple.native
+%: Makefile.coq
 
-test: test.native
+Makefile.coq: _CoqProject
+	$(COQBIN)coq_makefile -f _CoqProject -o Makefile.coq CAMLPKGS = "-package lymp"
 
-clean:
-	rm -rf _build/*
+tests: all
+	@$(MAKE) -C tests -s clean
+	@$(MAKE) -C tests -s all
 
-%.native:
-	ocamlbuild -use-ocamlfind -pkgs lymp -tag thread $@
-	mv $@ $*
-
-.PHONY: test default
+-include Makefile.coq

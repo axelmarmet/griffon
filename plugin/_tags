@@ -1,2 +1,0 @@
-<ocaml_src/**>: include
-<ocaml_src/**>: package(lymp)
