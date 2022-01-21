@@ -1,24 +1,17 @@
 import os
 from glob import glob
 import pickle
-from typing import Tuple
 
 import numpy as np
 
-import pytorch_lightning as pl
-
 import torch
-import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import torch.nn.functional as F
 
-from random import randint, random
-
 from torch.utils.data.dataset import Dataset
-from torch.utils.data.sampler import Sampler
 
 from griffon.coq_dataclasses import *
-from griffon.utils import pad_mask, pad_list
+from griffon.utils import pad_mask
 
 from griffon.constants import NUM_SUB_TOKENS, MASK_TOKEN, PAD_TOKEN, TGT_IGNORE_INDEX
 
@@ -28,7 +21,10 @@ class CounTDataset(Dataset[CounTBatch]):
     distance matrices and collating the matrices from multiple samples into one big tensor.
     """
 
-    def __init__(self, root_path:str, split:str):
+    def __init__(self, root_path:str, split:str,
+                 mask_prob:float = 0.15,
+                 random_token_prob: float = 0.1,
+                 leave_unmasked_prob: float = 0.1):
 
         assert os.path.exists(root_path), f"Path {root_path} does not exist"
         assert split in ["train", "test", "valid"], f"Split {split} is not supported"
@@ -39,7 +35,14 @@ class CounTDataset(Dataset[CounTBatch]):
         self.files = sorted(glob(os.path.join(sample_dir, "*.pickle")))
         self.vocab = pickle.load(open(os.path.join(root_path, "vocab.pkl"), "rb"))
 
+        self.mask_prob = mask_prob
+        self.random_token_prob = random_token_prob
+        self.leave_unmasked_prob = leave_unmasked_prob
+
         self.pad_id = self.vocab[PAD_TOKEN]
+        self.mask_id = self.vocab[MASK_TOKEN]
+
+        self.weights = np.full(len(self.vocab), 1/len(self.vocab))
 
     def to_dataloader(self, batch_size:int, num_workers:int):
         return DataLoader(
@@ -50,15 +53,89 @@ class CounTDataset(Dataset[CounTBatch]):
             num_workers=num_workers,
             persistent_workers=True)
 
-    def __getitem__(self, index:int)->CounTSample:
-        sample:CounTSample = pickle.load(open(self.files[index], "rb"))
-        return sample
+    def __getitem__(self, index:int)->MaskedCounTSample:
+        sample:PreCounTSample = pickle.load(open(self.files[index], "rb"))
+        return self.mask_item(sample)
+
+    def mask_item(self, sample:PreCounTSample)->MaskedCounTSample:
+        """Heavily inspired from fairseq implementation
+
+        Args:
+            statement (PreCounTSample): [description]
+
+        Returns:
+            MaskedCounTSample: [description]
+        """
+
+        sz = sample.input_ids.shape[0]
+
+        assert (
+            (sample.input_ids != self.mask_id).all()
+        ), f"Sample contains mask_idx ({self.mask_id}), this is not expected!"
+
+        # decide elements to mask
+        mask = np.full(sz, False)
+        num_mask = int(
+            # add a random number for probabilistic rounding
+            self.mask_prob * sz + np.random.rand()
+        )
+        mask_idc = np.random.choice(sz, num_mask, replace=False)
+        mask[mask_idc] = True
+        mask = torch.from_numpy(mask)
+
+        target_ids = torch.empty_like(sample.input_ids).fill_(TGT_IGNORE_INDEX)
+        target_ids = sample.input_ids[mask]
+
+        # decide unmasking and random replacement
+        rand_or_unmask_prob = self.random_token_prob + self.leave_unmasked_prob
+        if rand_or_unmask_prob > 0.0:
+            rand_or_unmask = mask & (np.random.rand(sz) < rand_or_unmask_prob)
+            if self.random_token_prob == 0.0:
+                unmask = rand_or_unmask
+                rand_mask = None
+            elif self.leave_unmasked_prob == 0.0:
+                unmask = None
+                rand_mask = rand_or_unmask
+            else:
+                unmask_prob = self.leave_unmasked_prob / rand_or_unmask_prob
+                decision = np.random.rand(sz) < unmask_prob
+                unmask = rand_or_unmask & decision
+                rand_mask = rand_or_unmask & (~decision)
+        else:
+            unmask = rand_mask = None
+
+        if unmask is not None:
+            mask = mask ^ unmask
+
+        new_input_ids = sample.input_ids
+        new_input_ids[torch.from_numpy(mask)] = self.mask_id
+
+        if rand_mask is not None:
+            num_rand = rand_mask.sum()
+            num_rand_subtokens = np.random.geometric(0.4, num_rand)
+            # clamp so that we don't go further than possible
+            num_rand_subtokens[num_rand_subtokens > NUM_SUB_TOKENS] = NUM_SUB_TOKENS
+
+            random_subtokens = np.random.choice(
+                len(self.vocab),
+                (num_rand, NUM_SUB_TOKENS),
+                p=self.weights,
+            )
+            random_subtokens[:,np.arange(NUM_SUB_TOKENS) >= num_rand_subtokens] = self.pad_id
+            new_input_ids[torch.from_numpy(rand_mask)] = torch.from_numpy(random_subtokens)
+
+        return MaskedCounTSample(
+            input_ids=new_input_ids,
+            distance_indices=sample.distance_indices,
+            distance_bins=sample.distance_bins,
+            target_ids=target_ids
+        )
 
     def __len__(self) -> int:
         return len(self.files)
 
     @staticmethod
-    def collate_fn(samples: List[CounTSample])->CounTBatch:
+    def collate_fn(samples: List[MaskedCounTSample])->CounTBatch:
 
         # we need to go through every tensor and pad it before stacking them along
         # the batching digm

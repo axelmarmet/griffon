@@ -1,5 +1,3 @@
-import argparse
-import os
 import pickle
 from numpy import sqrt
 
@@ -12,29 +10,21 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-import torch.multiprocessing as mp
-from torch.nn.parallel import DistributedDataParallel as DDP
 
-from typing import Dict, Any, Callable, NamedTuple
+from typing import Dict, Any
 from torch import Tensor
 
-import json
 import math
 
-from torchtext.vocab import Vocab
-import wandb
 from griffon.constants import PAD_TOKEN, TGT_IGNORE_INDEX
-from griffon.dataset.count_dataset import CounTDataset
-from griffon.dataset.semantic_testcase_dataset import SemanticTestCaseDataset, SemanticTestCases
+from griffon.dataset.semantic_testcase_dataset import SemanticTestCases
 from griffon.functional.focal_loss import focal_loss
 from griffon.metrics import top_k_metric
 from griffon.models.cosine_warmup_scheduler import CosineWarmupScheduler
 from griffon.models.encoder.code_transformer import CodeTransformer
 
 from griffon.coq_dataclasses import CounTBatch, CounTBatchInput
-from griffon.models.encoder.standard_transformer import Seq2SeqEncoder
 from griffon.preprocessing.stage2.vocab import AbstractVocab
-from griffon.utils import cleanup, set_seed, setup
 
 def _get_activation_fn(activation:str)->nn.Module:
     if activation == "relu":
