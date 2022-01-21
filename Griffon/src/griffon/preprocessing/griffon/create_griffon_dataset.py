@@ -15,12 +15,8 @@ import multiprocessing as mp
 
 import shutil
 
-from random import randint, random
-import numpy as np
-from tqdm import tqdm
-
 from griffon.constants import EOS_TOKEN, NUM_SUB_TOKENS, MASK_TOKEN, PAD_TOKEN, SOS_TOKEN, TGT_IGNORE_INDEX, UNK_TOKEN
-from griffon.coq_dataclasses import GriffonLemma, GriffonSample, GriffonStatement, CounTSample, Stage1Token, Stage2Sample, Stage2Statement, Stage2Token
+from griffon.coq_dataclasses import GriffonLemma, GriffonSample, GriffonStatement, MaskedCounTSample, Stage1Token, Stage2Sample, Stage2Statement, Stage2Token
 from griffon.utils import pad_list, pad_mask, set_seed
 
 def init_process(args:Namespace):
@@ -62,12 +58,8 @@ def process_sample(args:Namespace, sample_path:str):
 
             extended_vocabulary_ids.append(token_vocabulary_ids)
 
-        # TODO remove once sure
-        pointer_pad_mask = sequence != pad_id
-
         return GriffonStatement(tokens=sequence,
                               extended_vocabulary_ids=extended_vocabulary_ids,
-                              pointer_pad_mask=pointer_pad_mask,
                               distances=statement.distances)
 
     def transform_lemma(lemma : List[Stage1Token], extended_vocab:Dict[str,int])->GriffonLemma:
@@ -122,7 +114,6 @@ def process_sample(args:Namespace, sample_path:str):
         seq_lengths       :List[int] = []
 
         seq_tensors       :List[Tensor] = []
-        pointer_pad_masks :List[Tensor] = []
         distance_matrices :List[Tensor] = []
         binning_vectors   :List[Tensor] = []
 
@@ -137,10 +128,6 @@ def process_sample(args:Namespace, sample_path:str):
 
             sequence = F.pad(sequence, [0, 0, 0, pad_length], value=pad_id)
             seq_tensors.append(sequence)
-
-            pointer_pad_masks.append(
-                F.pad(statement.pointer_pad_mask, [0, 0, 0, pad_length], value=0) # 0 is false in this context
-            )
 
             # pad the distance matrices
             dist_matrices:List[Tensor] = []
@@ -168,12 +155,10 @@ def process_sample(args:Namespace, sample_path:str):
         padding_mask = torch.logical_not(pad_mask( torch.tensor(seq_lengths), max_len=max_seq_length).bool())
         distance_matrix = torch.stack(distance_matrices, dim=0)
         binning_matrix = torch.stack(binning_vectors, dim=0)
-        pointer_pad_mask = torch.stack(pointer_pad_masks, dim=0)
 
         ret_sample = GriffonSample(
-            sequences=seq_tensor,
+            statements=seq_tensor,
             extended_vocabulary_ids=extended_vocabulary_ids,
-            pointer_pad_mask=pointer_pad_mask,
             distances_indices = distance_matrix,
             distances_bins = binning_matrix,
             token_padding_mask=padding_mask,

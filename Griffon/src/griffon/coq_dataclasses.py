@@ -67,7 +67,6 @@ class Stage2Sample:
 class GriffonStatement:
     tokens                  : Tensor    # shape `number tokens x number_subtokens`
     extended_vocabulary_ids : List[List[int]] # shape `number tokens x number_subtokens`
-    pointer_pad_mask        : Tensor    # shape `number tokens x number_subtokens`
     distances               : List[Distance]
 
 @dataclass
@@ -76,98 +75,62 @@ class GriffonLemma:
 
 @dataclass
 class GriffonSample:
-    sequences               : Tensor # shape `number_statements x max_number_tokens x max_subtokens`
+    statements               : Tensor # shape `number_statements x max_number_tokens x max_subtokens`
     extended_vocabulary_ids : Tensor # shape `number_statements x max_number_tokens x max_subtokens`
     distances_indices         : Tensor # shape `number_statements x number_distances x max_number_tokens x max_number_tokens`
     distances_bins          : Tensor # shape `number_statements x number_distances x number_bins`
 
     # To only use actual info in all of the above tensors
     token_padding_mask      : Tensor # shape `number_statements x max_number_tokens`
-    pointer_pad_mask        : Tensor # shape `number_statements x max_number_tokens x max_subtokens`
 
     lemma                   : Tensor  # shape `number_tokens x max_subtokens`
     extended_vocabulary     : Dict[str,int]
 
     def validate(self):
-        statements = [0,0,0,0,0,0]
-        tokens = [0,0,0,0,0,0]
-        subtokens = [0,0,0]
+        statements = [0,0,0,0,0]
+        tokens = [0,0,0,0,0]
+        subtokens = [0,0]
         distances = [0,0]
 
-        statements[0], tokens[0], subtokens[0] = self.sequences.shape
+        statements[0], tokens[0], subtokens[0] = self.statements.shape
         statements[1], tokens[1], subtokens[1] = self.extended_vocabulary_ids.shape
-        statements[2], tokens[2], subtokens[2] = self.pointer_pad_mask.shape
-        statements[3], distances[0], tokens[3], tokens[4] = self.distances_indices.shape
-        statements[4], distances[1], _ = self.distances_bins.shape
-        statements[5], tokens[5] = self.token_padding_mask.shape
+        statements[2], distances[0], tokens[2], tokens[3] = self.distances_indices.shape
+        statements[3], distances[1], _ = self.distances_bins.shape
+        statements[4], tokens[4] = self.token_padding_mask.shape
 
         assert (all(statements[0] == s for s in statements)), "Not all tensors have the same number of statements"
         assert (all(tokens[0] == t for t in tokens)), "Not all tensors have the same number of tokens"
         assert (all(subtokens[0] == st for st in subtokens)), "Not all tensors have the same number of subtokens"
         assert (all(distances[0] == d for d in distances)), "Not all tensors have the same number of distances"
 
-    def pin_memory(self):
-        self.sequences = self.sequences.pin_memory()
-        self.extended_vocabulary_ids = self.extended_vocabulary_ids.pin_memory()
-        self.pointer_pad_mask = self.pointer_pad_mask.pin_memory()
-        self.distances_indices = self.distances_indices.pin_memory()
-        self.distances_bins = self.distances_bins.pin_memory()
-        self.token_padding_mask = self.token_padding_mask.pin_memory()
-        self.lemma = self.lemma.pin_memory()
-        return self
-
-    def to(self, *args):
-        self.sequences = self.sequences.to(*args)
-        self.extended_vocabulary_ids = self.extended_vocabulary_ids.to(*args)
-        self.pointer_pad_mask = self.pointer_pad_mask.to(*args)
-        self.distances_indices = self.distances_indices.to(*args)
-        self.distances_bins = self.distances_bins.to(*args)
-        self.token_padding_mask = self.token_padding_mask.to(*args)
-        self.lemma = self.lemma.to(*args)
-        return self
-
 @dataclass
-class GriffonBatch:
+class GriffonStatementBatch:
     statements              : Tensor # shape `batch x max_number_statements x max_number_tokens x max_subtokens`
-    extended_vocabulary_ids : Tensor # shape `batch x number_statements x max_number_tokens x max_subtokens`
+    extended_vocabulary_ids : Tensor # shape `batch x max_number_statements x max_number_tokens x max_subtokens`
     distances_indices       : Tensor # shape `batch x max_number_statements x number_distances x max_number_tokens x max_number_tokens`
     distances_bins          : Tensor # shape `batch x max_number_statements x number_distances x number_bins`
-    lemmas                  : Tensor # shape `batch x number_lemma_tokens x max_subtokens`
-
-    # To only use actual info in all of the above tensors
-    statement_token_padding : Tensor # shape `batch x number_statements x max_number_tokens`
-    lemma_token_padding     : Tensor # shape `batch x number_lemma_tokens`
-
+    statement_token_padding : Tensor # shape `batch x max_number_statements x max_number_tokens`
     extended_vocabularies   : List[Dict[str,int]]
 
     def validate(self):
-        batches = [0,0,0,0,0,0,0]
+        batches = [0,0,0,0,0,0]
         statements = [0,0,0,0,0]
         tokens = [0,0,0,0,0]
-        lemma_tokens = [0,0]
-        subtokens = [0,0,0]
+        subtokens = [0,0]
         distances = [0,0]
 
         batches[0], statements[0], tokens[0], subtokens[0] = self.statements.shape
         batches[1], statements[1], tokens[1], subtokens[1] = self.extended_vocabulary_ids.shape
-
-        batches[2], statements[2], distances[0], tokens[2], tokens[3] = self.distances_indices.shape
-        batches[3], statements[3], distances[1], _ = self.distances_bins.shape
-        batches[4], statements[4], tokens[4] = self.statement_token_padding.shape
-        batches[5], lemma_tokens[0], subtokens[2] = self.lemmas.shape
-        batches[6], lemma_tokens[1] = self.lemma_token_padding.shape
+        batches[2], statements[2], distances[0], tokens[2], tokens[3] = self.distances_indices
+        batches[3], statements[3], distances[1], _ = self.distances_bins
+        batches[4], statements[4], tokens[4] = self.statement_token_padding
+        statements[5] = len(self.extended_vocabulary_ids)
 
         assert (all(batches[0] == b for b in batches)), "Not all tensors have the same amount of batches"
         assert (all(statements[0] == s for s in statements)), "Not all tensors have the same number of statements"
         assert (all(tokens[0] == t for t in tokens)), "Not all tensors have the same number of tokens"
-        assert (all(lemma_tokens[0] == t for t in lemma_tokens)), "Not all tensors have the same number of lemma tokens"
         assert (all(subtokens[0] == st for st in subtokens)), "Not all tensors have the same number of subtokens"
         assert (all(distances[0] == d for d in distances)), "Not all tensors have the same number of distances"
-
-        # check that all -1 subtokens are contained in the padding mask
-        invalid_mask = (self.lemmas == -1).sum(dim=-1).bool()
-        # check invalid_mask -> lemma_token_padding === !invalid_mask \/ lemma_token_padding
-        assert torch.logical_or(torch.logical_not(invalid_mask), self.lemma_token_padding).all()
 
     def pin_memory(self):
         self.statements = self.statements.pin_memory()
@@ -175,8 +138,6 @@ class GriffonBatch:
         self.distances_indices = self.distances_indices.pin_memory()
         self.distances_bins = self.distances_bins.pin_memory()
         self.statement_token_padding = self.statement_token_padding.pin_memory()
-        self.lemmas = self.lemmas.pin_memory()
-        self.lemma_token_padding = self.lemma_token_padding.pin_memory()
         return self
 
     def to(self, *args):
@@ -185,12 +146,58 @@ class GriffonBatch:
         self.distances_indices = self.distances_indices.to(*args)
         self.distances_bins = self.distances_bins.to(*args)
         self.statement_token_padding = self.statement_token_padding.to(*args)
+        return self
+
+@dataclass
+class GriffonLemmaBatch:
+    # lemmas related
+    lemmas                  : Tensor # shape `batch x number_lemma_tokens x max_subtokens`
+    lemma_token_padding     : Tensor # shape `batch x number_lemma_tokens`
+
+    def validate(self):
+        assert self.lemmas.shape[0] == self.lemma_token_padding.shape[0], "batch dim does not match"
+        assert self.lemmas.shape[1] == self.lemma_token_padding.shape[1], "number tokens does not match"
+
+        # check that all -1 subtokens are contained in the padding mask
+        invalid_mask = (self.lemmas == -1).sum(dim=-1).bool()
+        # check invalid_mask -> lemma_token_padding === !invalid_mask \/ lemma_token_padding
+        assert torch.logical_or(torch.logical_not(invalid_mask), self.lemma_token_padding).all()
+
+    def pin_memory(self):
+        self.lemmas = self.lemmas.pin_memory()
+        self.lemma_token_padding = self.lemma_token_padding.pin_memory()
+        return self
+
+    def to(self, *args):
         self.lemmas = self.lemmas.to(*args)
         self.lemma_token_padding = self.lemma_token_padding.to(*args)
         return self
 
 @dataclass
-class CTCoqOutput:
+class GriffonBatch:
+    input:GriffonStatementBatch
+    target:GriffonLemmaBatch
+
+    def validate(self):
+        self.input.validate()
+        self.target.validate()
+        assert self.input.statements.shape[0] == self.target.lemmas.shape[0]
+
+    def to(self, *args):
+        self.input.to(*args)
+        self.target = self.target.to(*args)
+        return self
+
+    def pin_memory(self):
+        self.input = self.input.pin_memory()
+        self.target = self.target.pin_memory()
+        return self
+
+    def as_tuple(self):
+        return (self.input, self.target)
+
+@dataclass
+class GriffonOutput:
     ...
 
 @dataclass

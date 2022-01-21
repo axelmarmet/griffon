@@ -12,7 +12,7 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 
 from griffon.constants import EOS_TOKEN, MAX_NUM_TOKEN, NUM_SUB_TOKENS, PAD_TOKEN, SOS_TOKEN, TGT_IGNORE_INDEX, UNK_TOKEN
-from griffon.coq_dataclasses import GriffonBatch, GriffonLemma, GriffonSample, GriffonStatement, Stage1Token, Stage2Sample, Stage2Statement, Stage2Token
+from griffon.coq_dataclasses import GriffonBatch, GriffonLemma, GriffonLemmaBatch, GriffonSample, GriffonStatement, GriffonStatementBatch, Stage1Token, Stage2Sample, Stage2Statement, Stage2Token
 from griffon.utils import pad_list, pad_mask
 
 class GriffonDataset(Dataset):
@@ -51,8 +51,8 @@ class GriffonDataset(Dataset):
 
     def collate_fn(self, samples:List[GriffonSample])->GriffonBatch:
 
-        max_number_statements = max((sample.sequences.shape[0] for sample in samples))
-        max_number_tokens_statements =  max((sample.sequences.shape[1] for sample in samples))
+        max_number_statements = max((sample.statements.shape[0] for sample in samples))
+        max_number_tokens_statements =  max((sample.statements.shape[1] for sample in samples))
 
         max_number_tokens_lemma = max((sample.lemma.shape[0] for sample in samples))
 
@@ -68,12 +68,12 @@ class GriffonDataset(Dataset):
         batch_lemma_token_paddings : List[Tensor] = []
 
         for sample in samples:
-            statement_padding_amount = max_number_statements - sample.sequences.shape[0]
-            statement_token_padding_amount = max_number_tokens_statements - sample.sequences.shape[1]
+            statement_padding_amount = max_number_statements - sample.statements.shape[0]
+            statement_token_padding_amount = max_number_tokens_statements - sample.statements.shape[1]
             lemma_padding_amount = max_number_tokens_lemma - sample.lemma.shape[0]
 
             # we pad the statements
-            statements = F.pad(sample.sequences,
+            statements = F.pad(sample.statements,
                                [0, 0, 0, statement_token_padding_amount, 0, statement_padding_amount],
                                value=self.pad_id)
             batch_statements.append(statements)
@@ -131,16 +131,21 @@ class GriffonDataset(Dataset):
         lemma_token_padding = torch.stack(batch_lemma_token_paddings)
         extended_vocabularies = [sample.extended_vocabulary for sample in samples]
 
-        batch = GriffonBatch(
-            statements=statements,
+        statement_batch = GriffonStatementBatch(
+            statements = statements,
             extended_vocabulary_ids=extended_vocabulary_ids,
-            distances_indices=distances_indices,
-            distances_bins=distances_bins,
-            lemmas=lemmas,
-            statement_token_padding = statement_token_padding,
-            lemma_token_padding=lemma_token_padding,
-            extended_vocabularies = extended_vocabularies
+            distances_indices = distances_indices,
+            distances_bins = distances_bins,
+            statement_token_padding=statement_token_padding,
+            extended_vocabularies=extended_vocabularies
         )
+
+        lemma_batch = GriffonLemmaBatch(
+            lemmas = lemmas,
+            lemma_token_padding = lemma_token_padding
+        )
+
+        batch = GriffonBatch(statement_batch, lemma_batch)
 
         batch.validate()
 
