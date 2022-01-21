@@ -49,7 +49,7 @@ class SemanticTestCaseDataset(Dataset):
         self.pad_id = self.vocab[PAD_TOKEN]
         self.mask_id = self.vocab[MASK_TOKEN]
 
-    def transform_to_count_sample(self, statement:Stage2Statement, masked_statement:List[str])->CounTSample:
+    def transform_to_count_sample(self, statement:Stage2Statement, masked_statement:List[str])->MaskedCounTSample:
 
         target_ids = []
 
@@ -75,7 +75,7 @@ class SemanticTestCaseDataset(Dataset):
         distance_indices = torch.stack([distance[0] for distance in statement.distances])
         distance_bins = torch.stack([distance[1] for distance in statement.distances])
 
-        return CounTSample(
+        return MaskedCounTSample(
             input_ids = input_ids,
             distance_indices = distance_indices,
             distance_bins = distance_bins,
@@ -102,7 +102,7 @@ class SemanticTestCaseDataset(Dataset):
         masked_statements = self.masks[filename]
         statements:List[Stage2Statement] = pickle.load(open(self.files[index], "rb"))
 
-        count_samples:List[CounTSample] = []
+        count_samples:List[MaskedCounTSample] = []
         sentence_names = []
         original_sentences = []
         masked_sentences:List[str] = []

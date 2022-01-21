@@ -9,12 +9,10 @@ import torch
 
 import shutil
 
-from random import randint, random
-import numpy as np
 from tqdm import tqdm
 
-from griffon.constants import NUM_SUB_TOKENS, MASK_TOKEN, PAD_TOKEN, TGT_IGNORE_INDEX
-from griffon.coq_dataclasses import MaskedCounTSample, PreCounTSample, Stage2Sample, Stage2Statement, Stage2Token
+from griffon.constants import NUM_SUB_TOKENS, PAD_TOKEN
+from griffon.coq_dataclasses import PreCounTSample, Stage2Sample, Stage2Statement
 from griffon.utils import pad_list, set_seed
 
 def create_from_stage2(args:Namespace):

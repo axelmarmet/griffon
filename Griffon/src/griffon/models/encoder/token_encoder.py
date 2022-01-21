@@ -25,5 +25,5 @@ class TokenEncoder(nn.Module):
         assert list(shape[-2:]) == [NUM_SUB_TOKENS, self.subtoken_dim]
 
         # flatten the subtokens dimensions into one contiguous dimension
-        subtokens = subtokens.view(shape[-2] + (NUM_SUB_TOKENS * self.subtoken_dim))
+        subtokens = subtokens.view(shape[:-2] + (NUM_SUB_TOKENS * self.subtoken_dim,))
         return self.token_encoder(subtokens)

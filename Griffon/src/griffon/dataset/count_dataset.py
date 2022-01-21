@@ -81,10 +81,9 @@ class CounTDataset(Dataset[CounTBatch]):
         )
         mask_idc = np.random.choice(sz, num_mask, replace=False)
         mask[mask_idc] = True
-        mask = torch.from_numpy(mask)
 
         target_ids = torch.empty_like(sample.input_ids).fill_(TGT_IGNORE_INDEX)
-        target_ids = sample.input_ids[mask]
+        target_ids[torch.from_numpy(mask)] = sample.input_ids[torch.from_numpy(mask)]
 
         # decide unmasking and random replacement
         rand_or_unmask_prob = self.random_token_prob + self.leave_unmasked_prob
@@ -112,17 +111,18 @@ class CounTDataset(Dataset[CounTBatch]):
 
         if rand_mask is not None:
             num_rand = rand_mask.sum()
-            num_rand_subtokens = np.random.geometric(0.4, num_rand)
-            # clamp so that we don't go further than possible
-            num_rand_subtokens[num_rand_subtokens > NUM_SUB_TOKENS] = NUM_SUB_TOKENS
+            if num_rand > 0:
+                num_rand_subtokens = np.random.geometric(0.4, (num_rand,1))
+                # clamp so that we don't go further than possible
+                num_rand_subtokens[num_rand_subtokens > NUM_SUB_TOKENS] = NUM_SUB_TOKENS
 
-            random_subtokens = np.random.choice(
-                len(self.vocab),
-                (num_rand, NUM_SUB_TOKENS),
-                p=self.weights,
-            )
-            random_subtokens[:,np.arange(NUM_SUB_TOKENS) >= num_rand_subtokens] = self.pad_id
-            new_input_ids[torch.from_numpy(rand_mask)] = torch.from_numpy(random_subtokens)
+                random_subtokens = np.random.choice(
+                    len(self.vocab),
+                    (num_rand, NUM_SUB_TOKENS),
+                    p=self.weights,
+                )
+                random_subtokens[np.arange(NUM_SUB_TOKENS)[np.newaxis] >= num_rand_subtokens] = self.pad_id
+                new_input_ids[torch.from_numpy(rand_mask)] = torch.from_numpy(random_subtokens)
 
         return MaskedCounTSample(
             input_ids=new_input_ids,
