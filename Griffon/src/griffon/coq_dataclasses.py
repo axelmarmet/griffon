@@ -194,7 +194,13 @@ class CTCoqOutput:
     ...
 
 @dataclass
-class CounTSample:
+class PreCounTSample:
+    input_ids               : Tensor    # shape `number tokens x number_subtokens`
+    distance_indices        : Tensor    # shape `number distances x number tokens x number_tokens`
+    distance_bins           : Tensor    # shape `number distances x number bins`
+
+@dataclass
+class MaskedCounTSample:
     input_ids               : Tensor    # shape `number tokens x number_subtokens`
     distance_indices        : Tensor    # shape `number distances x number tokens x number_tokens`
     distance_bins           : Tensor    # shape `number distances x number bins`
