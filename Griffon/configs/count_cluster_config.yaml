@@ -22,7 +22,7 @@ fit:
     num_nodes: 1
     num_processes: 1
     devices: null
-    gpus: 2
+    gpus: 1
     auto_select_gpus: false
     tpu_cores: null
     ipus: null
@@ -60,7 +60,7 @@ fit:
     deterministic: false
     reload_dataloaders_every_n_epochs: 0
     reload_dataloaders_every_epoch: false
-    auto_lr_find: false
+    auto_lr_find: true
     replace_sampler_ddp: true
     detect_anomaly: false
     auto_scale_batch_size: false
