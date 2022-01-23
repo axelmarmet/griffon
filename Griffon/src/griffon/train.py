@@ -33,6 +33,7 @@ class MyLightningCLI(LightningCLI):
             logging.getLogger("wandb").setLevel(logging.WARNING)
             logging.getLogger("requests").setLevel(logging.WARNING)
             logging.getLogger("urllib3").setLevel(logging.WARNING)
+            self.trainer.logger.watch(self.model, log="all")
 
     def before_test(self):
         self._config_logger()

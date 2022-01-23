@@ -19,7 +19,7 @@ import math
 from griffon.constants import PAD_TOKEN, TGT_IGNORE_INDEX
 from griffon.dataset.semantic_testcase_dataset import SemanticTestCases
 from griffon.functional.focal_loss import focal_loss
-from griffon.metrics import top_k_metric
+from griffon.metrics import relative_entropy, top_k_metric
 from griffon.models.cosine_warmup_scheduler import CosineWarmupScheduler
 from griffon.models.decoder.token_decoder import TokenDecoder
 from griffon.models.encoder.code_transformer import CodeTransformer
@@ -127,10 +127,12 @@ class CounT(pl.LightningModule):
 
         len_vocab = preds.shape[-1]
         if self.hparams["optimizer"]["loss_fn"]["type"] == "f_loss":
+            gamma = (self.current_epoch / self.trainer.max_epochs) * \
+                    self.hparams["optimizer"]["loss_fn"]["gamma"]
             loss = focal_loss(
                 preds.view(-1, len_vocab),
                 tgt_ids.view(-1),
-                gamma=self.hparams["optimizer"]["loss_fn"]["gamma"],
+                gamma=gamma,
                 ignore_index=TGT_IGNORE_INDEX
             )
         else:
@@ -141,6 +143,27 @@ class CounT(pl.LightningModule):
             )
         self.log("training loss", loss, on_step=False, on_epoch=True)
         return loss
+
+    def get_mlm_metrics(self, predictions:Tensor, tgt_ids:Tensor, name_prefix:str):
+
+        metrics = {}
+        metrics[f"{name_prefix}_top_3_no_padding"] = \
+            top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), pad_idx=self.vocab[PAD_TOKEN], k=3).mean()
+        metrics[f"{name_prefix}_accuracy_no_padding"] = \
+            top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), pad_idx=self.vocab[PAD_TOKEN], k=1).mean()
+        metrics[f"{name_prefix}_top_3_with_padding"] = \
+            top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=3).mean()
+        metrics[f"{name_prefix}_accuracy_no_padding"] = \
+            top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=1).mean()
+
+        mask = tgt_ids != TGT_IGNORE_INDEX
+        metrics[f"{name_prefix}_relative_entropy_with_padding"] = \
+            relative_entropy(predictions[mask].reshape(-1, len(self.vocab))).mean()
+        mask = torch.logical_and(mask, tgt_ids != self.vocab[PAD_TOKEN])
+        metrics[f"{name_prefix}_relative_entropy_no_padding"] = \
+            relative_entropy(predictions[mask].reshape(-1, len(self.vocab))).mean()
+
+        return metrics
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
 
@@ -184,13 +207,12 @@ class CounT(pl.LightningModule):
                                         data = summary_data)
 
         def mlm_validation_step(batch:CounTBatch):
-            K = 3
-
             inp, tgt_ids = batch.as_tuple()
 
             predictions = self.forward(inp)
-            res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), pad_idx=self.vocab[PAD_TOKEN], k=K).mean()
-            self.log(f"validation_top_3", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
+            metrics = self.get_mlm_metrics(predictions, tgt_ids, "validation")
+            for name, value in metrics.items():
+                self.log(name, value, on_step=False, on_epoch=True, add_dataloader_idx=False)
 
         assert dataloader_idx < 2, f"Unexpected index {dataloader_idx}"
 
@@ -243,19 +265,12 @@ class CounT(pl.LightningModule):
                                         data = summary_data)
 
         def mlm_test_step(batch:CounTBatch):
-            K = 3
-
             inp, tgt_ids = batch.as_tuple()
 
             predictions = self.forward(inp)
-            res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), pad_idx=self.vocab[PAD_TOKEN], k=K).mean()
-            self.log(f"test top 3 no padding", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
-            res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), pad_idx=self.vocab[PAD_TOKEN], k=1).mean()
-            self.log(f"test accuracy no padding", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
-            res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=K).mean()
-            self.log(f"test top 3 with padding", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
-            res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=1).mean()
-            self.log(f"test accuracy with padding", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
+            metrics = self.get_mlm_metrics(predictions, tgt_ids, "test")
+            for name, value in metrics.items():
+                self.log(name, value, on_step=False, on_epoch=True, add_dataloader_idx=False)
 
         assert dataloader_idx < 2, f"Unexpected index {dataloader_idx}"
 
