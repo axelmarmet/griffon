@@ -84,9 +84,9 @@ fit:
           num_subtokens: 5
           token_embedding_dim: 1024
           scale_token_embeddings: false
-          activation_fn: tanh
+          activation_fn: gelu
           code_transformer:
-            num_layers: 4
+            num_layers: 6
             encoder_layer :
               nhead: 8
               dim_feedforward: 2048

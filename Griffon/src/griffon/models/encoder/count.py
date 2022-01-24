@@ -21,11 +21,12 @@ from griffon.dataset.semantic_testcase_dataset import SemanticTestCases
 from griffon.functional.focal_loss import focal_loss
 from griffon.metrics import relative_entropy, top_k_metric
 from griffon.models.cosine_warmup_scheduler import CosineWarmupScheduler
-from griffon.models.decoder.token_decoder import TokenDecoder
+from griffon.models.subtokens.predictor import Predictor
+from griffon.models.subtokens.token_decoder import TokenDecoder
 from griffon.models.encoder.code_transformer import CodeTransformer
 
 from griffon.coq_dataclasses import CounTBatch, CounTBatchInput
-from griffon.models.encoder.token_encoder import TokenEncoder
+from griffon.models.subtokens.token_encoder import TokenEncoder
 from griffon.preprocessing.stage2.vocab import AbstractVocab
 
 def _get_activation_fn(activation:str)->nn.Module:
@@ -86,11 +87,8 @@ class CounT(pl.LightningModule):
 
         self.encoder = CodeTransformer(architecture_config["code_transformer"])
 
-        self.predictor = nn.Sequential(
-            nn.Linear(self.subtoken_embedding_dim, self.subtoken_embedding_dim),
-            nn.ReLU(),
-            nn.Linear(self.subtoken_embedding_dim, len(self.vocab))
-        )
+        self.predictor = Predictor(self.subtoken_embedding_dim, len(self.vocab))
+
 
     def forward(self, inp:CounTBatchInput)->Tensor:
 
@@ -153,7 +151,7 @@ class CounT(pl.LightningModule):
             top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), pad_idx=self.vocab[PAD_TOKEN], k=1).mean()
         metrics[f"{name_prefix}_top_3_with_padding"] = \
             top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=3).mean()
-        metrics[f"{name_prefix}_accuracy_no_padding"] = \
+        metrics[f"{name_prefix}_accuracy_with_padding"] = \
             top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=1).mean()
 
         mask = tgt_ids != TGT_IGNORE_INDEX

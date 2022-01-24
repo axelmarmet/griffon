@@ -15,14 +15,20 @@ class TokenDecoder(nn.Module):
         self.token_decoder = nn.Sequential(
             nn.Linear(token_dim, NUM_SUB_TOKENS * subtoken_dim),
             nn.ReLU(),
+            nn.BatchNorm1d(NUM_SUB_TOKENS * subtoken_dim),
             nn.Linear(NUM_SUB_TOKENS * subtoken_dim, NUM_SUB_TOKENS * subtoken_dim),
             activation_fn
         )
+        self.final_batch_norm = nn.BatchNorm1d(subtoken_dim)
 
     def forward(self, subtokens:Tensor)->Tensor:
 
         shape = subtokens.shape
         assert shape[-1] == self.token_dim
 
+        # adapt the shape for batch norm that expects shape B x Features
+        subtokens = subtokens.reshape(-1, self.token_dim)
+
         # split the final dimension into multiple dimensions for the subtokens
-        return self.token_decoder(subtokens).view(shape[:-1] + (NUM_SUB_TOKENS, self.subtoken_dim))
+        subtoken_embeddings = self.token_decoder(subtokens).view((-1, self.subtoken_dim))
+        return self.final_batch_norm(subtoken_embeddings).view(shape[:-1] + (NUM_SUB_TOKENS, self.subtoken_dim))

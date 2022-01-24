@@ -15,8 +15,10 @@ class TokenEncoder(nn.Module):
         self.token_encoder = nn.Sequential(
             nn.Linear(NUM_SUB_TOKENS * subtoken_dim, NUM_SUB_TOKENS * subtoken_dim),
             nn.ReLU(),
+            nn.BatchNorm1d(NUM_SUB_TOKENS * subtoken_dim),
             nn.Linear(NUM_SUB_TOKENS * subtoken_dim, token_dim),
-            activation_fn
+            activation_fn,
+            nn.BatchNorm1d(token_dim)
         )
 
     def forward(self, subtokens:Tensor)->Tensor:
@@ -25,5 +27,5 @@ class TokenEncoder(nn.Module):
         assert list(shape[-2:]) == [NUM_SUB_TOKENS, self.subtoken_dim]
 
         # flatten the subtokens dimensions into one contiguous dimension
-        subtokens = subtokens.view(shape[:-2] + (NUM_SUB_TOKENS * self.subtoken_dim,))
-        return self.token_encoder(subtokens)
+        subtokens = subtokens.view((-1, NUM_SUB_TOKENS * self.subtoken_dim,))
+        return self.token_encoder(subtokens).view(shape[:-2] + (self.token_dim,))
