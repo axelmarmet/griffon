@@ -16,29 +16,20 @@ import torch.nn.functional as F
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from typing import Dict, Any, Callable, List, NamedTuple
+from typing import Dict, Any, List
 from torch import Tensor
 
-import json
 import math
 
-from torchtext.vocab import Vocab
-import wandb
 from griffon.constants import NUM_SUB_TOKENS, TGT_IGNORE_INDEX, UNK_TOKEN
-from griffon.dataset.count_dataset import CounTDataset
-from griffon.dataset.semantic_testcase_dataset import SemanticTestCaseDataset, SemanticTestCases
-from griffon.functional.focal_loss import focal_loss, focal_loss_from_log_probs
+from griffon.functional.focal_loss import focal_loss_from_log_probs
 from griffon.metrics import top_k_metric
 from griffon.models.cosine_warmup_scheduler import CosineWarmupScheduler
 from griffon.models.decoder.decoder import Decoder
 from griffon.models.decoder.pointer import PointerNetwork
-from griffon.models.encoder.code_transformer import CodeTransformer
 
-from griffon.coq_dataclasses import CTCoqOutput, GriffonBatch, GriffonSample, CounTBatch, CounTBatchInput, GriffonStatementBatch
+from griffon.coq_dataclasses import GriffonBatch, GriffonStatementBatch
 from griffon.models.encoder.count import CounT
-from griffon.models.encoder.standard_transformer import Seq2SeqEncoder
-from griffon.preprocessing.stage2.vocab import AbstractVocab
-from griffon.utils import cleanup, set_seed, setup
 
 class Griffon(pl.LightningModule):
 
@@ -285,28 +276,28 @@ class Griffon(pl.LightningModule):
         return log_probs
 
     # function to generate output sequence using greedy algorithm
-    def greedy_decode(self, src, src_mask, max_len, start_symbol):
-        ...
-        src = src.to(DEVICE)
-        src_mask = src_mask.to(DEVICE)
+    # def greedy_decode(self, src, src_mask, max_len, start_symbol):
+    #     ...
+    #     src = src.to(DEVICE)
+    #     src_mask = src_mask.to(DEVICE)
 
-        memory = model.encode(src, src_mask)
-        ys = torch.ones(1, 1).fill_(start_symbol).type(torch.long).to(DEVICE)
-        for i in range(max_len-1):
-            memory = memory.to(DEVICE)
-            tgt_mask = (generate_square_subsequent_mask(ys.size(0))
-                        .type(torch.bool)).to(DEVICE)
-            out = model.decode(ys, memory, tgt_mask)
-            out = out.transpose(0, 1)
-            prob = model.generator(out[:, -1])
-            _, next_word = torch.max(prob, dim=1)
-            next_word = next_word.item()
+    #     memory = model.encode(src, src_mask)
+    #     ys = torch.ones(1, 1).fill_(start_symbol).type(torch.long).to(DEVICE)
+    #     for i in range(max_len-1):
+    #         memory = memory.to(DEVICE)
+    #         tgt_mask = (generate_square_subsequent_mask(ys.size(0))
+    #                     .type(torch.bool)).to(DEVICE)
+    #         out = model.decode(ys, memory, tgt_mask)
+    #         out = out.transpose(0, 1)
+    #         prob = model.generator(out[:, -1])
+    #         _, next_word = torch.max(prob, dim=1)
+    #         next_word = next_word.item()
 
-            ys = torch.cat([ys,
-                            torch.ones(1, 1).type_as(src.data).fill_(next_word)], dim=0)
-            if next_word == EOS_IDX:
-                break
-        return ys
+    #         ys = torch.cat([ys,
+    #                         torch.ones(1, 1).type_as(src.data).fill_(next_word)], dim=0)
+    #         if next_word == EOS_IDX:
+    #             break
+    #     return ys
 
     def training_step(self, batch:GriffonBatch, batch_idx):
 
