@@ -6,5 +6,7 @@ theories/Demo.v
 
 ocaml_src/interactor.ml
 ocaml_src/interactor.mli
+ocaml_src/hypserializer.ml
+ocaml_src/hypserializer.mli
 ocaml_src/griffon.mlg
 ocaml_src/griffon_plugin.mlpack

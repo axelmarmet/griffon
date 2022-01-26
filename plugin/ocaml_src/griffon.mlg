@@ -9,6 +9,7 @@ DECLARE PLUGIN "griffon_plugin"
 {
   (*** Dependencies from Coq ***)
   open Stdarg
+  open Ltac_plugin
   (* open Pp *)
 }
 
@@ -19,3 +20,7 @@ VERNAC COMMAND EXTEND Predict CLASSIFIED AS QUERY
   }
 END
 
+TACTIC EXTEND ser_env
+| [ "Serialize"] ->
+  { Hypserializer.serialize_env () }
+END

@@ -1,6 +1,6 @@
 (library
  (name tuto2_plugin)
  (public_name coq.plugins.tutorial.p2)
- (libraries coq.plugins.ltac))
+ (libraries coq.plugins.ltac lymp))
 
 (coq.pp (modules g_tuto2))

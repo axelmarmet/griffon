@@ -5,6 +5,7 @@ let _ = Mltop.add_known_module __coq_plugin_name
  
   (*** Dependencies from Coq ***)
   open Stdarg
+  open Ltac_plugin
   (* open Pp *)
 
 
@@ -14,7 +15,7 @@ let () = Vernacextend.vernac_extend ~command:"Predict" ~classifier:(fun _ -> Ver
                                      Vernacextend.TyNil)), (let coqpp_body i
                                                            () = Vernacextend.VtDefault (fun () -> 
                                                                 
-# 16 "ocaml_src/griffon.mlg"
+# 17 "ocaml_src/griffon.mlg"
                            
     let res = Interactor.predict i in
     Feedback.msg_notice (Pp.(++) (Pp.str "Predicted :") (Pp.real res))
@@ -23,4 +24,11 @@ let () = Vernacextend.vernac_extend ~command:"Predict" ~classifier:(fun _ -> Ver
                                                            ~atts
                                                            -> coqpp_body i
                                                            (Attributes.unsupported_attributes atts)), None))]
+
+let () = Tacentries.tactic_extend __coq_plugin_name "ser_env" ~level:0 
+         [(Tacentries.TyML (Tacentries.TyIdent ("Serialize", Tacentries.TyNil), 
+           (fun ist -> 
+# 25 "ocaml_src/griffon.mlg"
+    Hypserializer.serialize_env () 
+           )))]
 
