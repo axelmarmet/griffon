@@ -1,0 +1,3 @@
+
+
+val predict : int -> float
