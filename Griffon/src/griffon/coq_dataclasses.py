@@ -121,10 +121,10 @@ class GriffonStatementBatch:
 
         batches[0], statements[0], tokens[0], subtokens[0] = self.statements.shape
         batches[1], statements[1], tokens[1], subtokens[1] = self.extended_vocabulary_ids.shape
-        batches[2], statements[2], distances[0], tokens[2], tokens[3] = self.distances_indices
-        batches[3], statements[3], distances[1], _ = self.distances_bins
-        batches[4], statements[4], tokens[4] = self.statement_token_padding
-        statements[5] = len(self.extended_vocabulary_ids)
+        batches[2], statements[2], distances[0], tokens[2], tokens[3] = self.distances_indices.shape
+        batches[3], statements[3], distances[1], _ = self.distances_bins.shape
+        batches[4], statements[4], tokens[4] = self.statement_token_padding.shape
+        batches[5] = len(self.extended_vocabularies)
 
         assert (all(batches[0] == b for b in batches)), "Not all tensors have the same amount of batches"
         assert (all(statements[0] == s for s in statements)), "Not all tensors have the same number of statements"

@@ -142,7 +142,8 @@ class Griffon(pl.LightningModule):
 
             return statement_token_embeddings.reshape(B, NUM_STATEMENTS, S, self.token_embedding_dim)
 
-        statement_tokens = self.token_encoder(inp.statements)
+        statement_subtokens = self.embedding(inp.statements)
+        statement_tokens = self.token_encoder(statement_subtokens)
         statement_tokens = encode_statement_tokens(statement_tokens,
                                                    inp.statement_token_padding,
                                                    inp.distances_indices,
@@ -236,17 +237,19 @@ class Griffon(pl.LightningModule):
             assert list(statement_padding.shape) == [B, NUM_STATEMENTS, S]
             assert len(extended_vocabularies) == B
 
-            # we brutally expand the statement padding mask so that it is at the subtoken granularity
-            statement_padding = statement_padding.unsqueeze(-1).expand(-1, -1, -1, NUM_SUB_TOKENS)
-
-            # we flatten the tensors to fit the `batch x total_num_tokens` shape expected by the pointer network
-            lemma_subtokens = lemma_subtokens.reshape(B, (L-1) * NUM_SUB_TOKENS, S_E)
-            extended_vocab_ids = extended_vocab_ids.view(B, NUM_STATEMENTS * S * NUM_SUB_TOKENS)
-            statement_subtokens = statement_subtokens.reshape(B, NUM_STATEMENTS * S * NUM_SUB_TOKENS, S_E)
-            statement_padding = statement_padding.reshape(B, NUM_STATEMENTS * S * NUM_SUB_TOKENS)
 
             # we first get the predictions without using the pointer network
             logits:Tensor = self.predictor(lemma_subtokens)
+
+
+            # we flatten the tensors to fit the `batch x total_num_tokens` shape expected by the pointer network
+            extended_vocab_ids = extended_vocab_ids.view(B, NUM_STATEMENTS * S * NUM_SUB_TOKENS)
+            statement_subtokens = statement_subtokens.reshape(B, NUM_STATEMENTS * S * NUM_SUB_TOKENS, S_E)
+            lemma_subtokens = lemma_subtokens.reshape(B, (L-1) * NUM_SUB_TOKENS, S_E)
+            logits = logits.reshape(B, (L-1)*NUM_SUB_TOKENS, len(self.vocab))
+            # we brutally expand the statement padding mask so that it is at the subtoken granularity
+            statement_padding = statement_padding.unsqueeze(-1).expand(-1, -1, -1, NUM_SUB_TOKENS)
+            statement_padding = statement_padding.reshape(B, NUM_STATEMENTS * S * NUM_SUB_TOKENS)
 
             # we combine the predictions with the one from the pointer network
             log_probs = self.pointer.forward(
