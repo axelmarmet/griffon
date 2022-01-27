@@ -252,8 +252,11 @@ class CounT(pl.LightningModule):
 
 
             res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=1).mean()
+            self.log("accuracy semantic test cases", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
 
-            self.log("test semantic test cases", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
+            res = top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=3).mean()
+            self.log("top 3 semantic test cases", res, on_step=False, on_epoch=True, add_dataloader_idx=False)
+
             if isinstance(self.logger, WandbLogger):
                 self.logger.log_text(key="test verbose semantic tests",
                                         columns = verbose_columns,
