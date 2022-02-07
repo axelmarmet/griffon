@@ -23,7 +23,7 @@ import math
 
 from griffon.constants import NUM_SUB_TOKENS, TGT_IGNORE_INDEX, UNK_TOKEN
 from griffon.functional.focal_loss import focal_loss_from_log_probs
-from griffon.metrics import top_k_metric
+from griffon.metrics import perplexity, top_k_metric
 from griffon.models.cosine_warmup_scheduler import CosineWarmupScheduler
 from griffon.models.decoder.decoder import Decoder
 from griffon.models.decoder.pointer import PointerNetwork
@@ -82,7 +82,6 @@ class Griffon(pl.LightningModule):
         log_probs = self.decode(batch, statement_tokens, statement_subtokens)
 
         return log_probs
-
 
     def encode(self, inp:GriffonStatementBatch)->Tuple[Tensor, Tensor]:
         """Encode the statements
@@ -318,15 +317,26 @@ class Griffon(pl.LightningModule):
         self.log("training_loss", loss, on_step=False, on_epoch=True)
         return loss
 
+    def get_metrics(self, predictions:Tensor, tgt_ids:Tensor, name_prefix:str):
+
+        LEN_VOCAB =  predictions.shape[-1]
+
+        metrics = {}
+        metrics[f"{name_prefix}_accuracy"] = \
+            top_k_metric(predictions.reshape(-1, LEN_VOCAB), tgt_ids.reshape(-1), 1)
+        metrics[f"{name_prefix}_perplexity"] = \
+            perplexity(predictions, tgt_ids)
+
+        return metrics
+
+
     def validation_step(self, batch:GriffonBatch, batch_idx, dataloader_idx=0):
         B = batch.target.lemmas.shape[0]
 
         preds = self.forward(batch)
-        len_vocab = preds.shape[-1]
-
-        tgts = batch.target.lemmas[:,1:].view(B, -1)
-        res = top_k_metric(preds.reshape(-1, len_vocab), tgts.reshape(-1), 1)
-        self.log("validation_accuracy", res, on_step=False, on_epoch=True)
+        metrics = self.get_metrics(preds, batch.target.lemmas[:,1:], "validation")
+        for name, value in metrics.items():
+            self.log(name, value, on_step=False, on_epoch=True, add_dataloader_idx=False)
 
     def configure_optimizers(self):
         assert isinstance(self.trainer, Trainer)

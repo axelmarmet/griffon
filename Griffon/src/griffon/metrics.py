@@ -39,3 +39,23 @@ def relative_entropy(preds:Tensor):
     current_entropy = -(probs * probs.log2()).sum(dim=-1)
 
     return current_entropy / max_entropy
+
+def perplexity(preds:Tensor, tgt:Tensor)->Tensor:
+    """computes the perplexity of auto regressive predictions
+       perplexity is defined as exp(-1 * (1/t) \sum_i log p_\{theta}(w_i|w_<i))
+    Args:
+        preds (Tensor): shape `batch x num_subtokens x extended vocab`
+        tgt (Tensor): shape `batch x num_subtokens`
+
+    Returns:
+        Tensor: shape `1`
+    """    
+    assert preds.shape[:2] == tgt.shape[:2]
+
+    mask = tgt != TGT_IGNORE_INDEX
+    tgt[mask] = 0
+
+    length_sentences = torch.argmax(torch.logical_not(mask), dim=1)
+    log_probs = torch.where(mask, preds[tgt], 0)
+
+    return torch.mean(torch.exp((-1 / length_sentences) * torch.sum(log_probs, dim=1)))
