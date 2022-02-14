@@ -6,11 +6,13 @@ import numpy as np
 
 import torch
 from torch.utils.data import Dataset, DataLoader
+from torch.utils.data.distributed import DistributedSampler
 import torch.nn.functional as F
 
 from torch.utils.data.dataset import Dataset
 
 from griffon.coq_dataclasses import *
+from griffon.dataset.bucket_sampler import BucketSampler
 from griffon.utils import pad_mask
 
 from griffon.constants import NUM_SUB_TOKENS, MASK_TOKEN, PAD_TOKEN, TGT_IGNORE_INDEX
@@ -44,10 +46,31 @@ class CounTDataset(Dataset[CounTBatch]):
 
         self.weights = np.full(len(self.vocab), 1/len(self.vocab))
 
+        # check that a random subset is sorted
+        self.probabilistic_check()
+
+    def probabilistic_check(self):
+        indices = np.random.choice(len(self), 100, replace=False)
+        for i, index_i in enumerate(indices):
+            for index_j in indices[i+1:]:
+                sample_i:PreCounTSample = pickle.load(open(self.files[index_i], "rb"))
+                sample_j:PreCounTSample = pickle.load(open(self.files[index_j], "rb"))
+                if index_i < index_j:
+                    assert sample_i.input_ids.shape[0] < sample_j.input_ids.shape[0], \
+                        f"file {self.files[index_i]} should have less tokens than" \
+                        f"file {self.files[index_j]}, did you sort the dataset?"
+                else:
+                    assert sample_i.input_ids.shape[0] > sample_j.input_ids.shape[0], \
+                        f"file {self.files[index_i]} should have more tokens than" \
+                        f"file {self.files[index_j]}, did you sort the dataset?"
+
+
     def to_dataloader(self, batch_size:int, num_workers:int):
+        inner_sampler = DistributedSampler(self, shuffle=True)
+        bucket_sampler = BucketSampler(inner_sampler, batch_size)
         return DataLoader(
             self,
-            batch_size=batch_size,
+            batch_sampler=bucket_sampler,
             collate_fn=self.collate_fn, # type: ignore
             pin_memory=True,
             num_workers=num_workers,

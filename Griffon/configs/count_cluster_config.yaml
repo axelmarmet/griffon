@@ -49,7 +49,7 @@ fit:
     accelerator: null
     strategy: null
     sync_batchnorm: false
-    precision: 32
+    precision: 16
     enable_model_summary: true
     weights_summary: top
     weights_save_path: null
@@ -61,7 +61,7 @@ fit:
     reload_dataloaders_every_n_epochs: 0
     reload_dataloaders_every_epoch: false
     auto_lr_find: true
-    replace_sampler_ddp: true
+    replace_sampler_ddp: false
     detect_anomaly: false
     auto_scale_batch_size: false
     prepare_data_per_node: null
