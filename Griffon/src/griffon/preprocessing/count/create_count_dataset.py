@@ -1,5 +1,6 @@
 
 import argparse
+from collections import defaultdict
 import os
 import pickle
 from argparse import Namespace
@@ -36,7 +37,8 @@ def create_from_stage2(args:Namespace):
         )
 
     def create_split(split:str):
-        sample_index = 0
+        indices = defaultdict(int)
+
         split_dir = os.path.join(args.stage2_root, split)
         assert os.path.exists(split_dir)
 
@@ -51,11 +53,13 @@ def create_from_stage2(args:Namespace):
             statements = sample.hypotheses + [sample.goal]
 
             for statement in statements:
-                if len(statement.tokens) < 7:
+                num_tokens = len(statement.tokens)
+                if num_tokens < 7:
                     continue
                 count_sample = transform_statement(statement)
-                target_file = os.path.join(target_dir, 'sample{:08d}.pickle'.format(sample_index))
-                sample_index += 1
+                target_file = os.path.join(target_dir, 'sample{:03d}_{:08d}.pickle'.format(num_tokens, indices[num_tokens]))
+                indices[num_tokens] += 1
+
                 pickle.dump(count_sample, open(target_file, "wb"))
 
     splits = ["train", "test", "valid"]
