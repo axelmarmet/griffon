@@ -22,7 +22,7 @@ fit:
     num_nodes: 1
     num_processes: 1
     devices: null
-    gpus: 1
+    gpus: 4
     auto_select_gpus: false
     tpu_cores: null
     ipus: null
@@ -86,7 +86,7 @@ fit:
           scale_token_embeddings: false
           activation_fn: gelu
           code_transformer:
-            num_layers: 6
+            num_layers: 12
             encoder_layer :
               nhead: 8
               dim_feedforward: 2048
