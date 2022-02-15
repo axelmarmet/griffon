@@ -56,12 +56,12 @@ class CounTDataset(Dataset[CounTBatch]):
                 sample_i:PreCounTSample = pickle.load(open(self.files[index_i], "rb"))
                 sample_j:PreCounTSample = pickle.load(open(self.files[index_j], "rb"))
                 if index_i < index_j:
-                    assert sample_i.input_ids.shape[0] < sample_j.input_ids.shape[0], \
-                        f"file {self.files[index_i]} should have less tokens than" \
+                    assert sample_i.input_ids.shape[0] <= sample_j.input_ids.shape[0], \
+                        f"file {self.files[index_i]} shouldn't have less tokens than" \
                         f"file {self.files[index_j]}, did you sort the dataset?"
                 else:
-                    assert sample_i.input_ids.shape[0] > sample_j.input_ids.shape[0], \
-                        f"file {self.files[index_i]} should have more tokens than" \
+                    assert sample_i.input_ids.shape[0] >= sample_j.input_ids.shape[0], \
+                        f"file {self.files[index_i]} shouldn't have less tokens than" \
                         f"file {self.files[index_j]}, did you sort the dataset?"
 
 
