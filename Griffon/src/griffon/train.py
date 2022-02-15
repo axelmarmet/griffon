@@ -3,6 +3,7 @@ from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from pytorch_lightning.trainer.trainer import Trainer
 from pytorch_lightning.utilities.cli import LightningCLI
 from pytorch_lightning.loggers.wandb import WandbLogger
+from pytorch_lightning.utilities.distributed import rank_zero_only
 
 import os
 
@@ -24,6 +25,7 @@ from pytorch_lightning.utilities.cli import MODEL_REGISTRY, DATAMODULE_REGISTRY
 
 class MyLightningCLI(LightningCLI):
 
+    @rank_zero_only
     def _config_logger(self):
         assert isinstance(self.trainer, Trainer)
 
