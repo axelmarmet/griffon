@@ -7,7 +7,7 @@ open Util
 
 
 let sexp_id (id : Names.Id.t) =
-  ["("; "Id"; (Names.Id.to_string id); ")"]
+  ["(Id"; (Names.Id.to_string id); ")"]
 
 let sexp_name (n : Names.Name.t) =
     match n with
@@ -32,6 +32,9 @@ let sexp_mutind (m : Names.MutInd.t) =
   ["(" ; "Mutind"] @
   (sexp_kername (Names.MutInd.user m)) @ [")"]
 
+let sexp_constant (n : Names.Constant.t) =
+  ["(" ; "Constant"] @ (sexp_kername (Names.Constant.user n)) @ [")"]
+
 let sexp_mutind_int (t : Names.MutInd.t * int) =
   match t with
   | m, i -> "(" :: (sexp_mutind m) @ [string_of_int i ; ")"]
@@ -42,7 +45,7 @@ let sexp_univ (u : Univ.Instance.t) =
 let get_str (c : Constr.t) =
   let rec sexp_constr (c : Constr.t) =
     let inner = match kind c with
-      | Rel i -> ["(" ; "Rel" ; string_of_int i ; ")"]
+      | Rel i -> ["Rel" ; string_of_int i]
       | Prod (na, t, b) -> ["Prod"] @ (sexp_name na.binder_name) @ (sexp_constr t) @ (sexp_constr b)
       | Sort (s) ->
           let sort_string = match s with
@@ -53,7 +56,10 @@ let get_str (c : Constr.t) =
             "Sort" :: sort_string
       | App (b,l) -> ["App"] @ (sexp_constr b) @ ["("] @ List.flatten (List.map sexp_constr (Array.to_list l)) @ [")"]
       | Ind (t, u)-> ["Ind"; "("] @ (sexp_mutind_int t) @ (sexp_univ u) @ [")"]
-      | _ -> []
+      | Const (t, u)-> ["Const"; "("] @ (sexp_constant t) @ (sexp_univ u) @ [")"]
+      | Var (id) -> "Var" :: (sexp_id id)
+      | _ ->  Feedback.msg_notice (Pp.str "Unknown") ;
+              Feedback.msg_notice (Constr.debug_print c) ; []
     in
       "(" :: inner @ [")"]
   in
@@ -61,10 +67,27 @@ let get_str (c : Constr.t) =
 
 let serialize_env () =
   Proofview.Goal.enter begin fun gl ->
+    let goal = EConstr.to_constr (Proofview.Goal.sigma gl)(Proofview.Goal.concl gl) in
+    let goal_tuple = get_str goal, "goal" in
+    Feedback.msg_notice (Constr.debug_print goal);
     let hyps = Environ.named_context_val (Proofview.Goal.env gl) in
-    (* giant hack *)
     let hyps_ctx = hyps.env_named_ctx in
-      List.iter (fun x ->
-        Feedback.msg_notice (Pp.str (get_str (Context.Named.Declaration.get_type x)))) hyps_ctx;
+    let hyps_list = List.map (fun x ->
+        (get_str (Context.Named.Declaration.get_type x)), Names.Id.to_string (Context.Named.Declaration.get_id x)) hyps_ctx in
+    let statements = goal_tuple :: hyps_list in
+    let result = Interactor.interact (statements) in
+    Feedback.msg_notice (Pp.str result);
     tclUNIT ()
+  end
+
+let log_env (title : string) =
+  Proofview.Goal.enter begin fun gl ->
+    let goal = EConstr.to_constr (Proofview.Goal.sigma gl)(Proofview.Goal.concl gl) in
+    let goal_tuple = get_str goal, "goal" in
+    let hyps = Environ.named_context_val (Proofview.Goal.env gl) in
+    let hyps_ctx = hyps.env_named_ctx in
+    let hyps_list = List.map (fun x ->
+        (get_str (Context.Named.Declaration.get_type x)), Names.Id.to_string (Context.Named.Declaration.get_id x)) hyps_ctx in
+    let statements = goal_tuple :: hyps_list in
+    Interactor.log title statements; tclUNIT ()
   end

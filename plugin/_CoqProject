@@ -3,6 +3,9 @@
 
 theories/Loader.v
 theories/Demo.v
+theories/check_common_sense.v
+theories/check_natural_deduction.v
+theories/check_type_inference.v
 
 ocaml_src/interactor.ml
 ocaml_src/interactor.mli

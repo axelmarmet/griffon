@@ -176,6 +176,13 @@ def get_token_sequence(de_bruijn_stack:List[str], node:Union[MyTree, MyToken], v
 
         return [(de_bruijn_stack[-de_bruijn_index], node.id)]
 
+    elif node.data == "constuctor_var":
+        assert len(node.children) == 1
+        assert isinstance(node.children[0], MyToken)
+        name = node.children[0].value
+        assert name in de_bruijn_stack
+        return [(name, node.id)]
+
     elif node.data == "constructor_case":
         # let's say we accept empty branches
         assert len(node.children) >= 2

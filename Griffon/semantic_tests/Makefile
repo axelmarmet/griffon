@@ -1,10 +1,17 @@
 all:
 	+make -C coq_projects/semantic_unit_tests -f Makefile all
+
+	python ../../../CoqGym/CoqGym/check_proofs.py --file coq_projects/semantic_unit_tests/common_sense.meta
+	python ../../../CoqGym/CoqGym/extract_proof.py --file coq_projects/semantic_unit_tests/common_sense.meta --proof constant_fold_ok
+	python ../../../CoqGym/CoqGym/extract_proof.py --file coq_projects/semantic_unit_tests/common_sense.meta --proof algebraic_simpl_ok
+	python ../../../CoqGym/CoqGym/extract_proof.py --file coq_projects/semantic_unit_tests/common_sense.meta --proof comp_ok
+
 	python ../../../CoqGym/CoqGym/check_proofs.py --file coq_projects/semantic_unit_tests/inference.meta
 	python ../../../CoqGym/CoqGym/extract_proof.py --file coq_projects/semantic_unit_tests/inference.meta --proof app_type_1
 	python ../../../CoqGym/CoqGym/extract_proof.py --file coq_projects/semantic_unit_tests/inference.meta --proof app_type_2
 	python ../../../CoqGym/CoqGym/extract_proof.py --file coq_projects/semantic_unit_tests/inference.meta --proof app_type_3
 	python ../../../CoqGym/CoqGym/extract_proof.py --file coq_projects/semantic_unit_tests/inference.meta --proof app_type_4
+
 	python ../../../CoqGym/CoqGym/check_proofs.py --file coq_projects/semantic_unit_tests/natural_deduction.meta
 	python ../../../CoqGym/CoqGym/extract_proof.py --file coq_projects/semantic_unit_tests/natural_deduction.meta --proof assumption
 	python ../../../CoqGym/CoqGym/extract_proof.py --file coq_projects/semantic_unit_tests/natural_deduction.meta --proof conj_intro

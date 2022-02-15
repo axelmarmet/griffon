@@ -59,6 +59,8 @@ Fixpoint algebraic_simpl (ae : aexp) : aexp :=
 Theorem comp_ok :
     forall aex, aeval (constant_fold (algebraic_simpl aex)) = aeval aex.
 Proof.
+    intros.
+    Serialize.
 Admitted.
 
 

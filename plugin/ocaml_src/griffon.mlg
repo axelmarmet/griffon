@@ -13,7 +13,7 @@ DECLARE PLUGIN "griffon_plugin"
   (* open Pp *)
 }
 
-VERNAC COMMAND EXTEND Predict CLASSIFIED AS QUERY
+VERNAC COMMAND EXTEND predict CLASSIFIED AS QUERY
 | [ "Predict" int(i) ] -> {
     let res = Interactor.predict i in
     Feedback.msg_notice (Pp.(++) (Pp.str "Predicted :") (Pp.real res))
@@ -23,4 +23,9 @@ END
 TACTIC EXTEND ser_env
 | [ "Serialize"] ->
   { Hypserializer.serialize_env () }
+END
+
+TACTIC EXTEND log_env
+| [ "Log" string(s)] ->
+  { Hypserializer.log_env (s) }
 END

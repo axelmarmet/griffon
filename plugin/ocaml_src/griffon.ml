@@ -9,7 +9,7 @@ let _ = Mltop.add_known_module __coq_plugin_name
   (* open Pp *)
 
 
-let () = Vernacextend.vernac_extend ~command:"Predict" ~classifier:(fun _ -> Vernacextend.classify_as_query) ?entry:None 
+let () = Vernacextend.vernac_extend ~command:"predict" ~classifier:(fun _ -> Vernacextend.classify_as_query) ?entry:None 
          [(Vernacextend.TyML (false, Vernacextend.TyTerminal ("Predict", 
                                      Vernacextend.TyNonTerminal (Extend.TUentry (Genarg.get_arg_tag wit_int), 
                                      Vernacextend.TyNil)), (let coqpp_body i
@@ -30,5 +30,14 @@ let () = Tacentries.tactic_extend __coq_plugin_name "ser_env" ~level:0
            (fun ist -> 
 # 25 "ocaml_src/griffon.mlg"
     Hypserializer.serialize_env () 
+           )))]
+
+let () = Tacentries.tactic_extend __coq_plugin_name "log_env" ~level:0 
+         [(Tacentries.TyML (Tacentries.TyIdent ("Log", Tacentries.TyArg (
+                                                       Extend.TUentry (Genarg.get_arg_tag wit_string), 
+                                                       Tacentries.TyNil)), 
+           (fun s ist -> 
+# 30 "ocaml_src/griffon.mlg"
+    Hypserializer.log_env (s) 
            )))]
 
