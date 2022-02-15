@@ -45,7 +45,7 @@ class MyLightningCLI(LightningCLI):
     def before_fit(self):
         self._config_logger()
         # should only give the train dataloader
-        self.trainer.tune(self.model, datamodule=self.datamodule)
+        # self.trainer.tune(self.model, datamodule=self.datamodule)
         return
 
 if __name__ == "__main__":
