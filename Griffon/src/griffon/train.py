@@ -28,7 +28,9 @@ class MyLightningCLI(LightningCLI):
         assert isinstance(self.trainer, Trainer)
 
         if isinstance(self.trainer.logger, WandbLogger):
-            self.trainer.logger._save_dir = os.path.join("wandb", self.trainer.logger.experiment.name)
+            exp_name = self.trainer.logger.experiment.name
+            print(type(exp_name))
+            self.trainer.logger._save_dir = os.path.join("wandb", exp_name)
             # because the wandb logger set logging to debug
             logging.getLogger("wandb").setLevel(logging.WARNING)
             logging.getLogger("requests").setLevel(logging.WARNING)
