@@ -52,6 +52,5 @@ class MyLightningCLI(LightningCLI):
         return
 
 if __name__ == "__main__":
-    print("starting")
     MyLightningCLI()
 
