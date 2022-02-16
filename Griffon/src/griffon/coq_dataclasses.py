@@ -149,6 +149,14 @@ class GriffonStatementBatch:
         return self
 
 @dataclass
+class EncodedGriffonStatementBatch:
+    statement_tokens         : Tensor # shape `batch x max_number_statements x max_number_tokens`
+    statement_subtokens         : Tensor # shape `batch x max_number_statements x max_number_tokens x max_subtokens`
+    extended_vocabulary_ids : Tensor # shape `batch x max_number_statements x max_number_tokens x max_subtokens`
+    statement_token_padding : Tensor # shape `batch x max_number_statements x max_number_tokens`
+    extended_vocabularies   : List[Dict[str,int]]
+
+@dataclass
 class GriffonLemmaBatch:
     # lemmas related
     lemmas                  : Tensor # shape `batch x number_lemma_tokens x max_subtokens`
@@ -195,10 +203,6 @@ class GriffonBatch:
 
     def as_tuple(self):
         return (self.input, self.target)
-
-@dataclass
-class GriffonOutput:
-    ...
 
 @dataclass
 class PreCounTSample:
