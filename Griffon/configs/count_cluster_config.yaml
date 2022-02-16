@@ -16,13 +16,13 @@ fit:
           save_top_k: 3
           mode: max
     default_root_dir: null
-    gradient_clip_val: null
+    gradient_clip_val: 1
     gradient_clip_algorithm: null
     process_position: 0
     num_nodes: 1
     num_processes: 1
     devices: null
-    gpus: 4
+    gpus: 2
     auto_select_gpus: false
     tpu_cores: null
     ipus: null
@@ -47,7 +47,7 @@ fit:
     flush_logs_every_n_steps: null
     log_every_n_steps: 50
     accelerator: null
-    strategy: null
+    strategy: ddp
     sync_batchnorm: false
     precision: 16
     enable_model_summary: true
@@ -66,6 +66,9 @@ fit:
     auto_scale_batch_size: false
     prepare_data_per_node: null
     plugins: null
+      # - class_path: pytorch_lightning.plugins.DDPPlugin
+      #   init_args:
+      #     find_unused_parameters: false
     amp_backend: native
     amp_level: null
     move_metrics_to_cpu: false
