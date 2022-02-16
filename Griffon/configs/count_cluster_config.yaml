@@ -46,7 +46,18 @@ fit:
     val_check_interval: 1.0
     flush_logs_every_n_steps: null
     log_every_n_steps: 50
-    accelerator: null
+    accelerator:
+      class_path: pytorch_lightning.accelerators.gpu.GPUAccelerator
+      init_args:
+        precision_plugin:
+          class: pytorch_lightning.plugins.NativeMixedPrecisionPlugin
+          init_args:
+            precision: 16
+            device: "cuda"
+        training_type_plugin:
+          class_path: pytorch_lightning.plugins.DDPPlugin
+          init_args:
+            find_unused_parameters: false
     strategy: ddp
     sync_batchnorm: false
     precision: 16
@@ -66,9 +77,6 @@ fit:
     auto_scale_batch_size: false
     prepare_data_per_node: null
     plugins: null
-      # - class_path: pytorch_lightning.plugins.DDPPlugin
-      #   init_args:
-      #     find_unused_parameters: false
     amp_backend: native
     amp_level: null
     move_metrics_to_cpu: false
