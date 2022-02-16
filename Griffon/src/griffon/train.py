@@ -25,6 +25,9 @@ from pytorch_lightning.utilities.cli import MODEL_REGISTRY, DATAMODULE_REGISTRY
 
 class MyLightningCLI(LightningCLI):
 
+    def __init__(self):
+        super().__init__(save_config_overwrite=True)
+
     @rank_zero_only
     def _config_logger(self):
         assert isinstance(self.trainer, Trainer)
@@ -49,5 +52,6 @@ class MyLightningCLI(LightningCLI):
         return
 
 if __name__ == "__main__":
+    print("starting")
     MyLightningCLI()
 
