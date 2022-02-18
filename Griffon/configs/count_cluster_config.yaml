@@ -16,8 +16,8 @@ fit:
           save_top_k: 3
           mode: max
     default_root_dir: null
-    gradient_clip_val: 1
-    gradient_clip_algorithm: null
+    gradient_clip_val: 5
+    gradient_clip_algorithm:  value
     process_position: 0
     num_nodes: 1
     num_processes: 1
@@ -33,7 +33,7 @@ fit:
     track_grad_norm: -1
     check_val_every_n_epoch: 1
     fast_dev_run: false
-    accumulate_grad_batches: 4
+    accumulate_grad_batches: 8
     max_epochs: 50
     min_epochs: null
     max_steps: -1
@@ -46,19 +46,7 @@ fit:
     val_check_interval: 1.0
     flush_logs_every_n_steps: null
     log_every_n_steps: 50
-    accelerator:
-      class_path: pytorch_lightning.accelerators.gpu.GPUAccelerator
-      init_args:
-        precision_plugin:
-          class: pytorch_lightning.plugins.NativeMixedPrecisionPlugin
-          init_args:
-            precision: 16
-            device: "cuda"
-        training_type_plugin:
-          class_path: pytorch_lightning.plugins.DDPPlugin
-          init_args:
-            find_unused_parameters: false
-    strategy: ddp
+    accelerator: null
     sync_batchnorm: false
     precision: 16
     enable_model_summary: true
@@ -116,7 +104,7 @@ fit:
     class_path: griffon.dataset.count_datamodule.CounTDataModule
     init_args:
       data_root: /root/scratch/griffon/data
-      batch_size: 200
+      batch_size: 100
       num_workers: 16
 
   ckpt_path: null
