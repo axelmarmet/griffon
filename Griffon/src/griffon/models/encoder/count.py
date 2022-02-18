@@ -60,6 +60,7 @@ class CounT(pl.LightningModule):
         self.d_model = architecture_config["token_embedding_dim"]
 
         self.vocab:AbstractVocab = pickle.load(open(architecture_config["vocab_file"], "rb"))
+        self.pad_idx = self.vocab[PAD_TOKEN]
 
         self.scale_token_embeddings = architecture_config["scale_token_embeddings"]
 
@@ -139,6 +140,7 @@ class CounT(pl.LightningModule):
                 tgt_ids.view(-1),
                 ignore_index=TGT_IGNORE_INDEX
             )
+        assert not torch.any(torch.isnan(loss))
         self.log("training loss", loss, on_step=False, on_epoch=True)
         return loss
 
@@ -155,11 +157,17 @@ class CounT(pl.LightningModule):
             top_k_metric(predictions.reshape(-1, len(self.vocab)), tgt_ids.reshape(-1), k=1).mean()
 
         mask = tgt_ids != TGT_IGNORE_INDEX
+
+        preds = predictions[mask].reshape(-1, len(self.vocab))
+
+        metrics[f"{name_prefix}_padding_prob"] = \
+            torch.mean(F.softmax(preds, dim=-1)[:,self.pad_idx])
+
         metrics[f"{name_prefix}_relative_entropy_with_padding"] = \
-            relative_entropy(predictions[mask].reshape(-1, len(self.vocab))).mean()
+            relative_entropy(preds).mean()
         mask = torch.logical_and(mask, tgt_ids != self.vocab[PAD_TOKEN])
         metrics[f"{name_prefix}_relative_entropy_no_padding"] = \
-            relative_entropy(predictions[mask].reshape(-1, len(self.vocab))).mean()
+            relative_entropy(preds).mean()
 
         return metrics
 
@@ -306,3 +314,6 @@ class CounT(pl.LightningModule):
     def optimizer_step(self, *args, **kwargs):
         super().optimizer_step(*args, **kwargs)
         self.lr_scheduler.step()
+        self.log("learning rate factor",
+            self.lr_scheduler.get_lr_factor(epoch=self.lr_scheduler.last_epoch),  #type: ignore
+            on_step=True)

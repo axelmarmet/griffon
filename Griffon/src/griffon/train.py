@@ -14,19 +14,20 @@ from griffon.dataset.count_datamodule import CounTDataModule
 import logging
 # import flash.image
 from pytorch_lightning.utilities.cli import MODEL_REGISTRY, DATAMODULE_REGISTRY
+from pytorch_lightning.plugins import DDPPlugin
 
 # MODEL_REGISTRY.register_classes(flash.image, pl.LightningModule)
 # print(MODEL_REGISTRY)
-
-# wandb.init(project="griffon")
-# wandb_logger = WandbLogger(project="griffon", save_dir=os.path.join("wandb", wandb.run.name))
 
 
 
 class MyLightningCLI(LightningCLI):
 
     def __init__(self):
-        super().__init__(save_config_overwrite=True)
+        strategy = DDPPlugin(find_unused_parameters=False)
+        super().__init__(save_config_overwrite=True, trainer_defaults={
+            "strategy" : strategy
+        })
 
     @rank_zero_only
     def _config_logger(self):
