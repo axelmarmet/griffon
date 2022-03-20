@@ -49,13 +49,15 @@ def perplexity(preds:Tensor, tgt:Tensor)->Tensor:
 
     Returns:
         Tensor: shape `1`
-    """    
+    """
     assert preds.shape[:2] == tgt.shape[:2]
 
-    mask = tgt != TGT_IGNORE_INDEX
+    mask = tgt == TGT_IGNORE_INDEX
     tgt[mask] = 0
 
-    length_sentences = torch.argmax(torch.logical_not(mask), dim=1)
-    log_probs = torch.where(mask, preds[tgt], 0)
+    length_sentences = (~mask).sum(dim=-1).sum(dim=-1)
 
-    return torch.mean(torch.exp((-1 / length_sentences) * torch.sum(log_probs, dim=1)))
+    log_probs = torch.gather(preds, -1, tgt.unsqueeze(-1)).squeeze()
+    log_probs[mask] = 0
+
+    return torch.mean(torch.exp((-1 / length_sentences) * torch.sum(log_probs, dim=-1).sum(dim=-1)))

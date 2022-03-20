@@ -262,7 +262,7 @@ class Griffon(pl.LightningModule):
             statement_padding = statement_padding.unsqueeze(-1).expand(-1, -1, -1, NUM_SUB_TOKENS)
             statement_padding = statement_padding.reshape(B, NUM_STATEMENTS * S * NUM_SUB_TOKENS)
 
-            max_vocab_len = max(len(extended_vocab) for extended_vocab in memory_batch.extended_vocabularies)
+            max_extended_vocab_len = max(len(extended_vocab) for extended_vocab in memory_batch.extended_vocabularies)
             # we combine the predictions with the one from the pointer network
             log_probs = self.pointer.forward(
                 logits = logits,
@@ -271,10 +271,10 @@ class Griffon(pl.LightningModule):
                 src_padding = statement_padding,
                 tgt_subtokens = lemma_subtokens,
                 len_vocab = self.vocab_len,
-                max_len_extended_vocab = max_vocab_len)
+                max_len_extended_vocab = max_extended_vocab_len)
 
             # we reshape to fit initial shape
-            log_probs = log_probs.reshape(B, L, NUM_SUB_TOKENS, max_vocab_len)
+            log_probs = log_probs.reshape(B, L, NUM_SUB_TOKENS, self.vocab_len + max_extended_vocab_len)
 
             return log_probs
 
